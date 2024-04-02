@@ -41,10 +41,12 @@ ENV LC_ALL en_US.UTF-8
 
 # get pintos source
 ## This is probably stupid, but here we are.
-RUN git clone https://git.ucsc.edu/aquinn1/pintos-reference.git
+## RUN git clone https://git.ucsc.edu/aquinn1/pintos-reference.git
+
+COPY . $PINTOS_ROOT
 
 # build bochs
-RUN cd ${PINTOS_ROOT} && src/misc/bochs-2.6.2-build.sh ${SWD}
+#RUN cd ${PINTOS_ROOT} && src/misc/bochs-2.6.2-build.sh ${SWD}
 
 # install qemu
  RUN apt update && apt install -y \
