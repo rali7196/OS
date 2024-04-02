@@ -32,7 +32,9 @@ cat $CWD/bochs-2.6.2-const-char.patch | patch -p1
 
 ## Update config.guess in bochs to the newest version (The current version is 14
 ## years old!)
+echo "Downloading config.guess, hopefully"
 wget -O config.guess 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
+echo "Downloaded"
 
 CFGOPTS="--with-x --with-x11 --with-term --with-nogui --prefix=$DSTDIR"
 os="`uname`"
