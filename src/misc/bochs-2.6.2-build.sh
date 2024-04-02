@@ -29,6 +29,11 @@ cat $CWD/bochs-2.6.2-xrandr-pkgconfig.patch | patch -p1
 cat $CWD/bochs-2.6.2-banner-stderr.patch | patch -p1
 cat $CWD/bochs-2.6.2-block-device-check.patch | patch -p1
 cat $CWD/bochs-2.6.2-const-char.patch | patch -p1
+
+## Update config.guess in bochs to the newest version (The current version is 14
+## years old!)
+wget -O config.guess 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
+
 CFGOPTS="--with-x --with-x11 --with-term --with-nogui --prefix=$DSTDIR"
 os="`uname`"
 if [ $os == "Darwin" ]; then
