@@ -1,12 +1,17 @@
 # Pintos
-This repo contains skeleton code for undergraduate Operating System course honor track at Peking University. 
+This repo is the starter code for ~~Embedded~~ Operating Systems at UC Santa Cruz.
 
-[Pintos](http://pintos-os.org) is a teaching operating system for 32-bit x86, challenging but not overwhelming, small
-but realistic enough to understand OS in depth (it can run on x86 machine and simulators 
-including QEMU, Bochs and VMWare Player!). The main source code, documentation and assignments 
-are developed by Ben Pfaff and others from Stanford (refer to its [LICENSE](./LICENSE)).
+[Pintos](http://pintos-os.org) is a teaching operating system for 32-bit x86.
+The project is real enough to teach operating systems, but small enough to be
+usable for an undergraduate curriculum.  This repository makes a number of
+further simplifications to ensure that the project can be completed in a 10 week
+quarter.  The repository also includes helpful simulators and tools for making
+testing and debugging easier for students.
 
-## Acknowledgement
-This source code is adapted from professor ([Ryan Huang](huang@cs.jhu.edu)) at JHU, who also taught a similar undergraduate OS course. He made some changes to the original
-Pintos labs (add lab0 and fix some bugs for MacOS). For students in PKU, please
-download the release version skeleton code by `git clone git@github.com:PKU-OS/pintos.git`.
+## Acknowledgments
+
+The main source code, documentation, and assignments were developed by Ben Pfaff
+and others from Stanford University (see the Pintos [LICENSE]).  The source tree
+here includes some modifications and enhancements from Peking University (PKU).
+Following provenance one additional step, the PKU source tree is adapted from
+Dr. Ryan Huang (now at University of Michigan).
