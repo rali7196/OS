@@ -9,20 +9,17 @@ FirstName LastName <email@domain.example>
 >If you have any preliminary comments on your submission, notes for the TAs, please give them here.
 
 
-
 >Please cite any offline or online sources you consulted while preparing your submission, other than the Pintos documentation, course text, lecture notes, and course staff.
-
 
 
 ## Booting Pintos
 
->A1: Put the screenshot of Pintos running example here.
-
+>A1: Put a screenshot of Pintos executing in your repository under docs/pintos_screenshot.{jpg,png,etc.}
 
 
 ## Debugging
 
-#### QUESTIONS: BIOS 
+#### QUESTIONS: BIOS
 
 >B1: What is the first instruction that gets executed?
 
@@ -85,14 +82,4 @@ FirstName LastName <email@domain.example>
 
 >> B9.3 what is the value of expression `init_page_dir[pd_no(ptov(0))]` in hexadecimal format?
 >>
->> 
-
-
-
-## Kernel Monitor
-
->C1: Put the screenshot of your kernel monitor running example here. (It should show how your kernel shell respond to `whoami`, `exit`, and `other input`.)
-
-#### 
-
->C2: Explain how you read and write to the console for the kernel monitor.
+>>
