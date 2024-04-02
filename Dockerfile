@@ -6,7 +6,7 @@ LABEL maintainer=aquinn1@ucsc.edu
 # home directory, toolchain directory, and pintos root
 ENV HOME /home/cse134
 ENV SWD=${HOME}/toolchain
-ENV PINTOS_ROOT=${HOME}/pintos-reference
+ENV PINTOS_ROOT=${HOME}/pintos-tmp
 
 WORKDIR ${HOME}
 
@@ -39,11 +39,8 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
-# get pintos source
-## This is probably stupid, but here we are.
-## RUN git clone https://git.ucsc.edu/aquinn1/pintos-reference.git
-
-COPY . $PINTOS_ROOT
+# copy over the source
+COPY . ${PINTOS_ROOT}
 
 # build bochs
 #RUN cd ${PINTOS_ROOT} && src/misc/bochs-2.6.2-build.sh ${SWD}
