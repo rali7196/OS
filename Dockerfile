@@ -68,7 +68,7 @@ COPY . ${PINTOS_ROOT}
     cp ../misc/gdb-macros ${SWD}/misc
 
 # add toolchain into path
- RUN echo PATH=${HOME}/toolchain/bin:$PATH >> ~/.bashrc
+ RUN echo PATH=${HOME}/toolchain/`uname -m`/bin:$PATH >> ~/.bashrc
 
 # remove the pintos root
  RUN rm -rf ${PINTOS_ROOT}
