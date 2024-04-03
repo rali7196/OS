@@ -43,7 +43,7 @@ ENV LC_ALL en_US.UTF-8
 COPY . ${PINTOS_ROOT}
 
 # build bochs
-#RUN cd ${PINTOS_ROOT} && src/misc/bochs-2.6.2-build.sh ${SWD}
+RUN cd ${PINTOS_ROOT} && src/misc/bochs-2.6.2-build.sh ${SWD}
 
 # install qemu
  RUN apt update && apt install -y \
