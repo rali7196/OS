@@ -34,7 +34,7 @@ The callstack is as follows:
 
 ### Part B
 The return value of the function on its first invocation is 0xc0101000
-# Question 7
+## Question 7
 
 ### Part A
 
