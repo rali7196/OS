@@ -27,10 +27,11 @@ The bootloader transfers control to the operating system when it calls the load\
 ### Part A
 The callstack is as follows:
 
-\#0 palloc\_get\_page()
-\#1 0xc00203aa in paging\_init () at ../../threads/init.c:168<br>
-\#2 0xc002031b in pintos\_init () at ../../threads/init.c:100<br>
-\#3 0xc002013d in start () at ../../start.S:180<br>
+\#0  palloc\_get\_page (flags=(PAL\_ASSERT | PAL\_ZERO))
+    at ../../threads/palloc.c:112
+\#1  0xc00203aa in paging\_init () at ../../threads/init.c:168
+\#2  0xc002031b in pintos\_init () at ../../threads/init.c:100
+\#3  0xc002013d in start () at ../../threads/start.S:180
 
 ### Part B
 The return value of the function on its first invocation is 0xc0101000
