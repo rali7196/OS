@@ -27,11 +27,11 @@ The bootloader transfers control to the operating system when it calls the load\
 ### Part A
 The callstack is as follows:
 
-\#0  palloc\_get\_page (flags=(PAL\_ASSERT | PAL\_ZERO))
-    at ../../threads/palloc.c:112
-\#1  0xc00203aa in paging\_init () at ../../threads/init.c:168
-\#2  0xc002031b in pintos\_init () at ../../threads/init.c:100
-\#3  0xc002013d in start () at ../../threads/start.S:180
+\#0  palloc\_get\_page (flags=(PAL\_ASSERT | PAL\_ZERO))  
+    at ../../threads/palloc.c:112  
+\#1  0xc00203aa in paging\_init () at ../../threads/init.c:168  
+\#2  0xc002031b in pintos\_init () at ../../threads/init.c:100  
+\#3  0xc002013d in start () at ../../threads/start.S:180  
 
 ### Part B
 The return value of the function on its first invocation is 0xc0101000
@@ -41,12 +41,12 @@ The return value of the function on its first invocation is 0xc0101000
 
 The callstack is as follows:
 
-\#0  palloc\_get\_page (flags=PAL\_ZERO) at ../../threads/palloc.c:112
-#1  0xc0020a81 in thread\_create (name=0xc002c4d5 "idle", priority=0,
-    function=0xc0020eb0 <idle>, aux=0xc000efbc) at ../../threads/thread.c:178
-#2  0xc0020976 in thread\_start () at ../../threads/thread.c:111
-#3  0xc0020334 in pintos\_init () at ../../threads/init.c:119
-#4  0xc002013d in start () at ../../threads/start.S:180
+\#0  palloc\_get\_page (flags=PAL\_ZERO) at ../../threads/palloc.c:112  
+#1  0xc0020a81 in thread\_create (name=0xc002c4d5 "idle", priority=0,  
+    function=0xc0020eb0 <idle>, aux=0xc000efbc) at ../../threads/thread.c:178  
+#2  0xc0020976 in thread\_start () at ../../threads/thread.c:111  
+#3  0xc0020334 in pintos\_init () at ../../threads/init.c:119  
+#4  0xc002013d in start () at ../../threads/start.S:180  
 
 ### Part B
 
