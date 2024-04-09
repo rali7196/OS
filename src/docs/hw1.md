@@ -1,7 +1,7 @@
-Rehan Ali
-CSE 134
-Homework 1
-April 8th, 2024
+Rehan Ali<br>
+CSE 134<br>
+Homework 1<br>
+April 8th, 2024<br>
 # Homework 1
 
 ## Question 1
