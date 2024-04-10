@@ -5,7 +5,7 @@ April 8th, 2024<br>
 # Homework 1
 
 ## Question 1
-When I first boot up pintos,
+When I first boot up pintos, the eip register contains the value 0xfff0. 
 
 ## Question 2
 
@@ -21,7 +21,7 @@ If the bootloader is unable to find the kernel, it calls the 0x18 software inter
 
 ## Question 5
 
-The bootloader transfers control to the operating system when it calls the load\_kernel branch. What this branch does is it loads the kernel and its various sectors until it is done loading. Then, it jump s to the starting of the sector, which seems to be 0x2000.
+The bootloader transfers control to the operating system when it calls the load\_kernel branch. What this branch does is it loads the kernel and its various sectors until it is done loading. Then, it jumps to the starting of the sector, which is calculated using the instruction %es:8(%si) and then is moved into the ebx register. Then, it issues the load sector command by moving the value 0x2000 into the ax register.
 
 ## Question 6
 ### Part A
@@ -50,4 +50,4 @@ The callstack is as follows:
 
 ### Part B
 
-The return value of palloc\_get\_page on its third invocation is 0xc0104000.
+The return value of palloc\_get\_page on its third invocation is 0xc0103000.
