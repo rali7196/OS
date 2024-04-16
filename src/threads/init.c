@@ -1,3 +1,10 @@
+
+
+
+
+#define COMMAND_BUFFER_SIZE 256
+
+
 #include "threads/init.h"
 #include <console.h>
 #include <debug.h>
@@ -134,9 +141,52 @@ pintos_init (void)
     run_actions (argv);
   } else {
     // TODO: no command line passed to kernel. Run interactively 
+	//do console init
+	//do input buffer init	
+	console_init();
+	input_init();
+	int curr_key;
+	char* cse134_str = "CSE134>";
+	char command_buffer[COMMAND_BUFFER_SIZE];
+	int idx = 0;
+	for(uint32_t i = 0; i < strlen(cse134_str); i++){
+		putchar( (char) cse134_str[i]);
+	}
+	while(1){
+		while( (char) curr_key != '\r'){
+			curr_key = input_getc();
+			putchar( (char) curr_key);	
+			command_buffer[idx]= (char) curr_key;
+			idx++;
+		}
+		putchar('\n');
+		if(strcmp("exit\r", command_buffer) == 0){
+			shutdown_configure (SHUTDOWN_POWER_OFF);
+			shutdown ();
+			thread_exit ();
+		}
+		else if (strcmp("whoami\r", command_buffer) == 0){
+			puts("rali3");
+		}
+		else {
+			puts(command_buffer);
+			/*puts("Invalid");*/
+		}
+		for(uint32_t i = 0; i < strlen(cse134_str); i++){
+			putchar( (char) cse134_str[i]);
+		}
+		curr_key = 'a';
+		for(int i = 0; i < COMMAND_BUFFER_SIZE; i++){
+			command_buffer[i] = '\0';
+		}	
+		idx = 0;
+
+	}
+
   }
 
   /* Finish up. */
+  shutdown_configure (SHUTDOWN_POWER_OFF);
   shutdown ();
   thread_exit ();
 }
