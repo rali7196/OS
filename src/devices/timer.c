@@ -24,6 +24,8 @@ static int64_t ticks;
    Initialized by timer_calibrate(). */
 static unsigned loops_per_tick;
 
+static struct list sleeping_thread_A1;
+
 static intr_handler_func timer_interrupt;
 static bool too_many_loops (unsigned loops);
 static void busy_wait (int64_t loops);
@@ -37,6 +39,8 @@ timer_init (void)
 {
   pit_configure_channel (0, 2, TIMER_FREQ);
   intr_register_ext (0x20, timer_interrupt, "8254 Timer");
+  list_init(&sleeping_thread_A1);
+
 }
 
 /** Calibrates loops_per_tick, used to implement brief delays. */
@@ -89,11 +93,37 @@ timer_elapsed (int64_t then)
 void
 timer_sleep (int64_t ticks) 
 {
-  int64_t start = timer_ticks ();
+  /*int64_t start = timer_ticks ();*/
+  //can use thread_block to block a thread, thread_unblock to 
+  //unblock a thread
+  //
+  //can use timer interrupt to 
+  //can also possibly use semaphores??
+
+  /*struct semaphore sem;*/
+  /*sema_init(&sem, 0);*/
+  /*struct intr_frame timer_interrupt_intr_frame;*/
+  /*timer_interrupt(&timer_interrupt_intr_frame);*/
 
   ASSERT (intr_get_level () == INTR_ON);
-  while (timer_elapsed (start) < ticks) 
-    thread_yield ();
+  enum intr_level old_level;
+  old_level = intr_disable ();
+  //push current thread into sleeping_list
+  //block thread
+  struct thread_time_left thread_to_sleep;
+
+  struct list_elem new_elem;
+  thread_to_sleep.elem = new_elem;
+  thread_to_sleep.sleep_ticks = ticks;
+  thread_to_sleep.ticks_at_calltime = timer_ticks();
+  thread_to_sleep.my_thread = thread_current(); 
+
+  list_push_back(&sleeping_thread_A1, &(thread_to_sleep.elem));
+  thread_block();
+  intr_set_level (old_level);
+  /*while (timer_elapsed (start) < ticks){ */
+    /*thread_yield ();*/
+  /*}*/
 }
 
 /** Sleeps for approximately MS milliseconds.  Interrupts must be
@@ -170,8 +200,19 @@ timer_print_stats (void)
 static void
 timer_interrupt (struct intr_frame *args UNUSED)
 {
+  //iterate through sleeping_list and then check 
+  //current-ticks - ticks_at_calltime > sleep_ticks
+  //	if true, reschedule the thread
   ticks++;
   thread_tick ();
+  struct list_elem *e;
+  for(e = list_begin(&sleeping_thread_A1); e != list_end(&sleeping_thread_A1); e = list_next(e)){
+	struct thread_time_left *curr = list_entry(e, struct thread_time_left, elem );	
+	if(timer_ticks() - curr->ticks_at_calltime >= curr->sleep_ticks){
+		 thread_unblock(curr->my_thread);
+		 list_remove(e); 
+	}
+  }
 }
 
 /** Returns true if LOOPS iterations waits for more than one timer

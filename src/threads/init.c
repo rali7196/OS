@@ -169,8 +169,8 @@ pintos_init (void)
 			puts("rali3");
 		}
 		else {
-			puts(command_buffer);
-			/*puts("Invalid");*/
+			/*puts(command_buffer);*/
+			puts("Invalid");
 		}
 		for(uint32_t i = 0; i < strlen(cse134_str); i++){
 			putchar( (char) cse134_str[i]);

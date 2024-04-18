@@ -3,10 +3,17 @@
 
 #include <round.h>
 #include <stdint.h>
-
+#include <list.h>
+#include "threads/thread.h"
 /** Number of timer interrupts per second. */
 #define TIMER_FREQ 100
 
+struct thread_time_left {
+	struct list_elem elem;	
+	int64_t sleep_ticks;
+	struct thread *my_thread;
+	int64_t ticks_at_calltime;
+};
 void timer_init (void);
 void timer_calibrate (void);
 
