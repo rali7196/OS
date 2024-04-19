@@ -161,9 +161,10 @@ pintos_init (void)
 		}
 		putchar('\n');
 		if(strcmp("exit\r", command_buffer) == 0){
-			shutdown_configure (SHUTDOWN_POWER_OFF);
-			shutdown ();
-			thread_exit ();
+			/*shutdown_configure (SHUTDOWN_POWER_OFF);*/
+			/*shutdown ();*/
+			/*thread_exit ();*/
+			break;
 		}
 		else if (strcmp("whoami\r", command_buffer) == 0){
 			puts("rali3");
