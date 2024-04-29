@@ -88,7 +88,23 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid UNUSED) 
 {
-  return -1;
+  // error checking
+  if(child_tid == -1){  // error value
+    return -1;
+  }
+
+  // Todo: check cases of -1 mentioned above
+  // if(){
+    
+  // }
+
+  struct thread *t = get_thread_by_tid(child_tid);
+
+  // wait for the child process to die, temperal infinite loop
+  while (t->status != THREAD_DYING) {
+    thread_yield();
+  }
+  return -1; // return -1 for now
 }
 
 /** Free the current process's resources. */
