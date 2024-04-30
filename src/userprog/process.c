@@ -88,7 +88,7 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid UNUSED) 
 { 
-  // To-do: check if process_wait() is already called /
+  // To-do: check if process_wait() is already called, how?? add another property in thread struct?
   if (child_tid != TID_ERROR && is_child_of_current_thread(child_tid)) { 
     struct thread *t = get_thread_by_tid(child_tid);
     if (t->killed_by_kernel) {

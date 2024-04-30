@@ -584,7 +584,8 @@ allocate_tid (void)
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
 
-// custom functions
+// custom functions for assign 2
+
 /** Returns a thread from all_list with the given tid. */
 struct thread *get_thread_by_tid(tid_t tid){
   struct list_elem *e;
@@ -596,4 +597,13 @@ struct thread *get_thread_by_tid(tid_t tid){
       }
     }
   return NULL;
+}
+
+/* Returns true if it tid is a child of current thread, false otherwise*/
+bool is_child_of_current_thread(tid_t tid){
+  struct thread *t = get_thread_by_tid(tid);
+  if(t == NULL){
+    return false;
+  }
+  return t->parent_tid == thread_current()->tid;
 }
