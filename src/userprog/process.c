@@ -87,8 +87,19 @@ start_process (void *file_name_)
    does nothing. */
 int
 process_wait (tid_t child_tid UNUSED) 
-{
-  return -1;
+{ 
+  // To-do: check if process_wait() is already called, how?? add another property in thread struct?
+  if (child_tid != TID_ERROR && is_child_of_current_thread(child_tid)) { 
+    struct thread *t = get_thread_by_tid(child_tid);
+    if (t->killed_by_kernel) {
+      return -1; // To-do: update killed_by_kernel in thread.c
+    }
+    while (t->status != THREAD_DYING) { // temperal infinite loop
+      thread_yield();
+    }
+    return t->exit_status;  // To-do: update exit status in thread.c
+  }
+  return -1; // return -1 for now
 }
 
 /** Free the current process's resources. */
