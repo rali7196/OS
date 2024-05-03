@@ -91,8 +91,9 @@ struct thread
     struct list_elem allelem;           /**< List element for all threads list. */
     int exit_status;                    /**< Exit status of the thread. */
     bool killed_by_kernel;              /**< True if the thread was killed by the kernel. */
-    struct list children_list;               /**< List of children of the thread. */
-    tid_t parent_tid;                   /**< Parent thread's tid. */
+    struct list children_list_tid;      /**< List of children's tid of the thread. */
+    tid_t parent_tid;                   /**< Parent thread's tid.  */
+
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /**< List element. */
 
