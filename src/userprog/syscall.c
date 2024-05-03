@@ -29,6 +29,7 @@ syscall_handler (struct intr_frame *f UNUSED)
   switch (syscall_number) // added system call numbers for project 2
   {
     case SYS_READ:
+      
       break;
     case SYS_WRITE:
       /* code */
@@ -45,7 +46,7 @@ static bool
 validate_user_pointer (const void *ptr) {
   if (!ptr)
     return false;
-  if (!validate_user_pointer(ptr))
+  if (!is_user_vaddr(ptr))
     return false;
   if (!pagedir_get_page(thread_current()->pagedir, ptr))
     return false;
