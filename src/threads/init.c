@@ -3,6 +3,7 @@
 
 
 #define COMMAND_BUFFER_SIZE 256
+#define MAX_ARGS 128
 
 
 #include "threads/init.h"
@@ -44,6 +45,12 @@
 #include "filesys/filesys.h"
 #include "filesys/fsutil.h"
 #endif
+
+
+
+
+char** parsed_argv;
+int parsed_argc;
 
 /** Page directory with kernel mappings only. */
 uint32_t *init_page_dir;
@@ -91,6 +98,7 @@ pintos_init (void)
   /* Break command line into arguments and parse options. */
   argv = read_command_line ();
   argv = parse_options (argv);
+
 
   /* Initialize ourselves as a thread so we can use locks,
      then enable console locking. */
@@ -188,6 +196,7 @@ pintos_init (void)
 
   /* Finish up. */
   shutdown_configure (SHUTDOWN_POWER_OFF);
+  free(parsed_argv);
   shutdown ();
   thread_exit ();
 }
@@ -337,7 +346,37 @@ static void
 run_task (char **argv)
 {
   const char *task = argv[1];
-  extern char** my_argv = argv;
+  //  char s[] = "  String to  tokenize. ";
+  //  char *token, *save_ptr;
+
+  //  for (token = strtok_r (s, " ", &save_ptr); token != NULL;
+  //       token = strtok_r (NULL, " ", &save_ptr))
+  //    printf ("'%s'\n", token);
+
+  //  outputs:
+
+  //    'String'
+  //    'to'
+  //    'tokenize.'
+
+  char* token, *save_ptr;
+
+  parsed_argv = malloc(128 * sizeof(char*));
+  
+  int parsed_argv_counter = 0;
+  for (token = strtok_r (argv[1], " ", &save_ptr); token != NULL;
+      token = strtok_r (NULL, " ", &save_ptr)){
+        parsed_argv[parsed_argv_counter] = token;
+        printf("%s\n", token);
+        parsed_argv_counter += 1;
+      }
+
+  parsed_argc=parsed_argv_counter-1;
+
+  parsed_argv[parsed_argv_counter] = 0x0;
+
+  
+
   
   printf ("Executing '%s':\n", task);
 #ifdef USERPROG

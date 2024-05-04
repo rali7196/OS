@@ -16,6 +16,7 @@ syscall_init (void)
 static void
 syscall_handler (struct intr_frame *f) 
 {
+  return;
   printf ("system call!\n");
   int syscall_num = *((uint32_t*)f->esp);
   if(syscall_num == SYS_WRITE){
