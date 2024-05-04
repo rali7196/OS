@@ -14,6 +14,7 @@
 
 static void syscall_handler (struct intr_frame *);
 static bool validate_user_pointer (const void *ptr);  // implemented for project 2
+static bool validate_file_descriptor(int fd);
 static struct lock fs_lock;  // lock for file system operations
 
 void
@@ -26,7 +27,6 @@ syscall_init (void)
 static void
 syscall_handler (struct intr_frame *f) 
 {
-  return;
   printf ("system call!\n");
 
   if (!validate_user_pointer(f->esp)) { // to-do: add user mem check for read/write
@@ -50,7 +50,7 @@ syscall_handler (struct intr_frame *f)
     if (!validate_user_pointer(file_name)){
       printf("Invalid file name in SYS_EXEC\n"); // debug
       f->eax = -1;
-      return; // thread_exit();
+      // thread_exit();
     }
     f->eax = process_execute(file_name); // will return -1 if error
   }
@@ -90,6 +90,11 @@ syscall_handler (struct intr_frame *f)
   }
   else if (syscall_num == SYS_FILESIZE){  // return the size of the file with the given fd
     int fd = *((int*)f->esp + 1);
+    if (!validate_file_descriptor(fd)){
+      f->eax = -1;
+      thread_current()->exit_status = -1;
+      thread_exit();
+    }
     lock_acquire(&fs_lock);
     f->eax = file_length(thread_current()->file_descriptors_table[fd]);
     lock_release(&fs_lock);
@@ -110,6 +115,11 @@ syscall_handler (struct intr_frame *f)
       }
       f->eax = size;
     } else {  // read from the file with the given fd
+      if (!validate_file_descriptor(fd)){
+        f->eax = -1;
+        thread_current()->exit_status = -1;
+        thread_exit();
+      }
       lock_acquire(&fs_lock);
       f->eax = file_read(thread_current()->file_descriptors_table[fd], buffer, size);
       lock_release(&fs_lock);
@@ -129,6 +139,11 @@ syscall_handler (struct intr_frame *f)
       putbuf(buffer, size);
       f->eax = size;
     } else {  // write to the file with the given fd
+      if (!validate_file_descriptor(fd)){
+        f->eax = -1;
+        thread_current()->exit_status = -1;
+        thread_exit();
+      }
       lock_acquire(&fs_lock);
       f->eax = file_write(thread_current()->file_descriptors_table[fd], buffer, size);
       lock_release(&fs_lock);
@@ -136,6 +151,11 @@ syscall_handler (struct intr_frame *f)
   }
   else if (syscall_num == SYS_SEEK){
     int fd = *((int*)f->esp + 1);
+    if (!validate_file_descriptor(fd)){
+      f->eax = -1;
+      thread_current()->exit_status = -1;
+      thread_exit();
+    }
     if (!validate_user_pointer((void*)(f->esp + 2))) {
       printf("Invalid position in SYS_SEEK\n"); // debug
       thread_current()->exit_status = -1;
@@ -148,12 +168,22 @@ syscall_handler (struct intr_frame *f)
   }
   else if (syscall_num == SYS_TELL){
     int fd = *((int*)f->esp + 1);
+    if (!validate_file_descriptor(fd)){
+      f->eax = -1;
+      thread_current()->exit_status = -1;
+      thread_exit();
+    }
     lock_acquire(&fs_lock);
     f->eax = file_tell(thread_current()->file_descriptors_table[fd]);
     lock_release(&fs_lock);
   }
   else if (syscall_num == SYS_CLOSE){
     int fd = *((int*)f->esp + 1);
+    if (!validate_file_descriptor(fd)){
+      f->eax = -1;
+      thread_current()->exit_status = -1;
+      thread_exit();
+    }
     lock_acquire(&fs_lock);
     file_close(thread_current()->file_descriptors_table[fd]);
     lock_release(&fs_lock);
@@ -174,5 +204,14 @@ validate_user_pointer (const void *ptr) {
     return false;
   if (!pagedir_get_page(thread_current()->pagedir, ptr))
     return false;
+  return true;
+}
+
+static bool
+validate_file_descriptor(int fd){
+  if (fd < 2 || fd > 255 || !thread_current()->file_descriptors_table[fd]){
+    printf("Invalid file descriptor in validate_file_discriptor\n"); // debug
+    return false;
+  }
   return true;
 }

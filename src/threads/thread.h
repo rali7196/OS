@@ -91,18 +91,13 @@ struct thread
     int priority;                       /**< Priority. */
     struct list_elem allelem;           /**< List element for all threads list. */
     int exit_status;                    /**< Exit status of the thread. */
-    bool killed_by_kernel;              /**< True if the thread was killed by the kernel. */
-    struct list children_list_tid;      /**< List of children's tid of the thread. */
+    struct list children_list;           /**< List of children's tid of the thread. */
     tid_t parent_tid;                   /**< Parent thread's tid.  */
     struct semaphore sema_wait;         /**< Semaphore for waiting for child to exit. */
     struct file* file_descriptors_table[256];
     
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /**< List element. */
-    //add an array of file objects, where the index is their file descriptor
-    //next file descriptor
-    //{0-253}
-    //current_thread->file_arr[fd+2]
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
