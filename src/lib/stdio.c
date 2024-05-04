@@ -608,7 +608,7 @@ hex_dump (uintptr_t ofs, const void *buf_, size_t size, bool ascii)
       n = end - start;
 
       /* Print line. */
-      printf ("%08jx  ", (uintmax_t) ROUND_DOWN (ofs, per_line));
+      printf ("%08jx ", (uintmax_t) ROUND_DOWN (ofs, per_line));
       for (i = 0; i < start; i++)
         printf ("   ");
       for (; i < end; i++) 
