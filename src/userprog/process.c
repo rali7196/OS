@@ -47,8 +47,20 @@ process_execute (const char *file_name)
 
   /* Create a new thread to execute FILE_NAME. */
   tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
-  if (tid == TID_ERROR)
+  if (tid == TID_ERROR) {
     palloc_free_page (fn_copy); 
+    return TID_ERROR;
+  }
+
+  // project 2 
+  // struct thread *child_thread = get_thread_by_tid(tid);
+  // if (child_thread != NULL) {
+  //   list_push_back(&thread_current()->children_list, &child_thread->allelem);
+  //   for (int i = 0; i < 256; i++) {
+  //     child_thread->file_descriptors_table[i] = thread_current()->file_descriptors_table[i];
+  //   }
+  //   child_thread->parent_tid = thread_current()->tid;
+  // }
   return tid;
 }
 
@@ -93,29 +105,22 @@ start_process (void *file_name_)
    This function will be implemented in problem 2-2.  For now, it
    does nothing. */
 int
-process_wait (tid_t child_tid UNUSED)   // modify process_execute too
+process_wait (tid_t child_tid UNUSED)   // todo: check if already called
 { 
-  /*
-  // To-do: check if process_wait() is already called, how??
-    // use a flag? check status?
-  // if (child_tid != TID_ERROR && is_child_of_current_thread(child_tid)) { 
-    struct thread *t = get_thread_by_tid(child_tid);
-    if (t->killed_by_kernel) {
-      return -1; // To-do: update killed_by_kernel in thread.c
-    }
-    while (t->status != THREAD_DYING) { // temperal infinite loop
-      // thread_yield();?
-    }
-    if (t->exit_status){
-      return t->exit_status;  // To-do: update exit status in thread.c
-    }
-  // }
-  return -1; // return -1 for now
-  */
- while(1){
-  
- }
+  struct thread *child = get_thread_by_tid(child_tid);
+  int status;
+
+  if (!child || child->parent_tid != thread_current()->tid) {
+      return -1; // TID is invalid or not a child of the calling process.
+  }
+
+  sema_down(&child->sema_wait);
+  status = child->exit_status;
+  sema_up(&child->sema_wait);
+
+  return status;
 }
+ 
 
 /** Free the current process's resources. */
 void
@@ -123,6 +128,14 @@ process_exit (void)
 {
   struct thread *cur = thread_current ();
   uint32_t *pd;
+
+  // close file discriptors
+  for (int i = 0; i < 256; i++) {
+      if (cur->file_descriptors_table[i] != NULL) {
+          file_close(cur->file_descriptors_table[i]);
+          cur->file_descriptors_table[i] = NULL;
+      }
+  }
 
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */

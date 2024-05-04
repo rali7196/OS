@@ -283,6 +283,27 @@ thread_exit (void)
 {
   ASSERT (!intr_context ());
 
+  struct thread *cur = thread_current();
+  
+  // Close all open file descriptors.
+  for (int i = 0; i < 256; i++) {
+      if (cur->file_descriptors_table[i] != NULL) {
+          file_close(cur->file_descriptors_table[i]);
+          cur->file_descriptors_table[i] = NULL;
+      }
+  }
+
+  // deal with children??
+
+  // Notify parent that we are exiting
+  if (cur->parent_tid != (-1 || NULL)) {
+    struct thread *parent = get_thread_by_tid(cur->parent_tid);
+    if (parent != NULL) {
+      sema_up(&parent->sema_wait);
+    }
+  }
+
+
 #ifdef USERPROG
   process_exit ();
 #endif
@@ -464,6 +485,13 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
   t->magic = THREAD_MAGIC;
+
+  t->exit_status = 0;
+  list_init(&t->children_list);
+  sema_init(&t->sema_wait, 0);
+  for (int i = 0; i < 256; i++) {
+    t->file_descriptors_table[i] = NULL;
+  }
 
   old_level = intr_disable ();
   list_push_back (&all_list, &t->allelem);
