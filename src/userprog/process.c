@@ -17,8 +17,15 @@
 #include "threads/palloc.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
+#include "threads/init.h"
+
+#define MAX_ARGS 128
+
+extern char** parsed_argv;
+extern int parsed_argc;
 
 static thread_func start_process NO_RETURN;
+void fake_return(void);
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
 /** Starts a new thread running a user program loaded from
@@ -324,6 +331,14 @@ load (const char *file_name, void (**eip) (void), void **esp)
   if (!setup_stack (esp))
     goto done;
 
+  //do argparsing here
+
+
+
+
+
+
+
   /* Start address. */
   *eip = (void (*) (void)) ehdr.e_entry;
 
@@ -445,6 +460,12 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 
 /** Create a minimal stack by mapping a zeroed page at the top of
    user virtual memory. */
+
+
+void fake_return(void){
+  return;
+};
+
 static bool
 setup_stack (void **esp) 
 {
@@ -455,11 +476,107 @@ setup_stack (void **esp)
   if (kpage != NULL) 
     {
       success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
-      if (success)
-        *esp = PHYS_BASE;
-      else
-        palloc_free_page (kpage);
+      if (success){
+        //allocate enough space for every pointer
+        //iterate through argv 
+        // *esp = PHYS_BASE;
+        // hex_dudmp(0, esp, 16, true);
+
+        //need to calculate how big the arguments are
+        // stack_size += sizeof(uint8_t);
+        // stack_size += sizeof('\0');
+        // stack_size += parsed_argc * sizeof(char*);
+        // stack_size += sizeof(parsed_argv);
+        // stack_size += sizeof(int);
+        // stack_size += sizeof(void(*)())
+        // *esp -= 1;
+        // hex_dudmp(0, esp, 16, true);
+        // memcpy(*esp, (void*) parsed_argv[4], strlen(parsed_argv[4]));
+        // memcpy((*esp)+4, (void*) parsed_argv[3], strlen(parsed_argv[3]));
+        // hex_dudmp((uintptr_t)*esp, (*esp), 32, true);
+        *esp = PHYS_BASE-4;
+
+        int esp_argv_addrs_curr_idx = 0;
+        char* esp_argv_addrs[parsed_argc+1];
+        for(int i = parsed_argc; i > 0; i--){
+          *esp -= strlen(parsed_argv[i])+1; 
+          memcpy((*esp), (void*) parsed_argv[i], strlen(parsed_argv[i]));
+          esp_argv_addrs[esp_argv_addrs_curr_idx] = *esp;
+          esp_argv_addrs_curr_idx += 1;
+          // *esp -= strlen(parsed_argv[i]); 
+        }
+        // hex_dudmp((uintptr_t) *esp, *esp, 1, true);
+        hex_dump((uintptr_t) *esp, *esp, 64, true);
+
+        esp_argv_addrs[parsed_argc] = 0x0;
+
+        // uint8_t word_align = 0;
+        // *esp -= sizeof(uint8_t);
+        // *esp = word_align;
+        // hex_ddump((uintptr_t) *esp, *esp, 64, true);
+
+        // hex_dudmp(0, esp, 16, true);  
+
+        // *esp -= sizeof(uint8_t);
+        // **esp = 0;
+
+        for(int i = parsed_argc; i > 0; i--){
+          *esp -= sizeof(char*);
+          // *esp = esp_argv_addrs[i];
+          memcpy(*esp, &esp_argv_addrs[i], 1);
+          // hex_dudmp(0, esp, 16, true);
+          // *esp -= 1;
+        }
+        // hex_dudmp((uintptr_t) *esp, *esp, 1, true);
+        hex_dump((uintptr_t) *esp, *esp, 64, true);
+
+        // *esp -= 
+        *esp -= sizeof(&(esp_argv_addrs[0]));
+        memcpy(*esp, &(esp_argv_addrs[0]), 1);
+        hex_dump((uintptr_t) *esp, *esp, 64, true);
+
+        
+        // hex_dudmp(0, esp, 16, true);
+        *esp -= sizeof(int*);
+        // **esp = parsed_argc;
+        // *esp = &parsed_argc;
+        memcpy(*esp, &parsed_argc, 1);
+        hex_dump((uintptr_t) *esp, *esp, 64, true);
+
+
+        // hex_ddump(0, esp, 16, true);
+        // void(*fake_return_addr)();
+
+        *esp -= sizeof(fake_return);
+
+
+        // fake_return_addr = fake_return;
+
+
+        memcpy(*esp, &fake_return, 1);
+
+        hex_dump((uintptr_t) *esp, *esp, 64, true);
+
+
+
+
+        // *esp = (void(*)())0;
+
+
+        // *esp -= 1;
+        // hex_ddump(0, esp, 16, true);
+        // *esp = 0;
+        // hex_dumdp(0, esp, 16, true);
+        // *esp = PHYS_BASE;
+        // hex_dudmp(0, esp, 16, true);
+
     }
+
+    else {
+      palloc_free_page (kpage);
+    }
+  }
+
   return success;
 }
 

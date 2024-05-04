@@ -97,6 +97,10 @@ struct thread
     
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /**< List element. */
+    //add an array of file objects, where the index is their file descriptor
+    //next file descriptor
+    //{0-253}
+    //current_thread->file_arr[fd+2]
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */

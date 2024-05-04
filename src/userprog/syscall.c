@@ -24,8 +24,9 @@ syscall_init (void)
 }
 
 static void
-syscall_handler (struct intr_frame *f UNUSED) 
+syscall_handler (struct intr_frame *f) 
 {
+  return;
   printf ("system call!\n");
 
   if (!validate_user_pointer(f->esp)) { // to-do: add user mem check for read/write
