@@ -110,7 +110,7 @@ process_wait (tid_t child_tid UNUSED)   // todo: check if already called
   struct thread *child = get_thread_by_tid(child_tid);
   int status;
 
-  if (!child || child->parent_tid != thread_current()->tid) {
+  if (!child || child->parent != thread_current()) {
       return -1; // TID is invalid or not a child of the calling process.
   }
 

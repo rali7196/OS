@@ -92,7 +92,7 @@ struct thread
     struct list_elem allelem;           /**< List element for all threads list. */
     int exit_status;                    /**< Exit status of the thread. */
     struct list children_list;           /**< List of children's tid of the thread. */
-    tid_t parent_tid;                   /**< Parent thread's tid.  */
+    struct thread* parent;               /**< Pointer to Parent thread  */
     struct semaphore sema_wait;         /**< Semaphore for waiting for child to exit. */
     struct file* file_descriptors_table[256];
     

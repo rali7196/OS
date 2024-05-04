@@ -11,6 +11,7 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "filesys/file.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -296,11 +297,8 @@ thread_exit (void)
   // deal with children??
 
   // Notify parent that we are exiting
-  if (cur->parent_tid != (-1 || NULL)) {
-    struct thread *parent = get_thread_by_tid(cur->parent_tid);
-    if (parent != NULL) {
-      sema_up(&parent->sema_wait);
-    }
+  if (cur->parent) {
+    sema_up(&cur->parent->sema_wait);
   }
 
 
@@ -633,5 +631,5 @@ bool is_child_of_current_thread(tid_t tid){
   if(t == NULL){
     return false;
   }
-  return t->parent_tid == thread_current()->tid;
+  return t->parent == thread_current();
 }
