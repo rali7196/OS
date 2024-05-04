@@ -30,6 +30,8 @@ syscall_handler (struct intr_frame *f)
   printf ("system call!\n");
 
   if (!validate_user_pointer(f->esp)) { // to-do: add user mem check for read/write
+    printf("Invalid ESP in syscall_handler\n"); // debug
+    thread_current()->exit_status = -1;
     thread_exit();  // Terminate the process if ESP is invalid
   }
 
@@ -99,7 +101,8 @@ syscall_handler (struct intr_frame *f)
     if (!validate_user_pointer(buffer) || !validate_user_pointer(buffer + size - 1)){ // check buffer validity
       printf("Invalid buffer in SYS_READ\n"); // debug
       f->eax = -1;
-      return; //thread_exit();
+      thread_current()->exit_status = -1;
+      thread_exit();
     }
     if (fd == 0){ // read from input_getc
       for (unsigned i = 0; i < size; i++){
@@ -119,6 +122,7 @@ syscall_handler (struct intr_frame *f)
     if (!validate_user_pointer(buffer) || !validate_user_pointer(buffer + size - 1)){ // check buffer validity
       printf("Invalid buffer in SYS_WRITE\n"); // debug
       f->eax = -1;
+      thread_current()->exit_status = -1;
       thread_exit();
     }
     if (fd == 1){  // write to the console
@@ -134,6 +138,7 @@ syscall_handler (struct intr_frame *f)
     int fd = *((int*)f->esp + 1);
     if (!validate_user_pointer((void*)(f->esp + 2))) {
       printf("Invalid position in SYS_SEEK\n"); // debug
+      thread_current()->exit_status = -1;
       thread_exit();
     }
     unsigned position = *((unsigned*)f->esp + 2);
@@ -157,7 +162,7 @@ syscall_handler (struct intr_frame *f)
   else {  // to-do: add proper error handling
     printf("Invalid system call number\n");
   }
-  thread_exit ();
+  // thread_exit ();
 }
 
 /*Return false if the given pointer is NULL, out of user space, or not in its page*/

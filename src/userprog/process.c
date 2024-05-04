@@ -98,20 +98,15 @@ process_wait (tid_t child_tid UNUSED)   // modify process_execute too
   // To-do: check if process_wait() is already called, how??
     // use a flag? check status?
   // if (child_tid != TID_ERROR && is_child_of_current_thread(child_tid)) { 
-  //   struct thread *t = get_thread_by_tid(child_tid);
-
-  //   //STUFF
-
-
-  //   if (t->exit_status){
-  //     return t->exit_status;  // To-do: update exit status in thread.c
-  //   }
+    struct thread *t = get_thread_by_tid(child_tid);
+    //STUFF
+    while(1){
+      if (t->status == THREAD_DYING){
+        return t->exit_status;  // To-do: update exit status in thread.c
+      }
+    }
   // }
-  // return -1; // return -1 for now
-  while (1)
-  {
-    /* code */
-  }
+  return -1; // return -1 for now
   
 }
 
