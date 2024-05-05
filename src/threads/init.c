@@ -371,7 +371,16 @@ run_task (char **argv)
         parsed_argv_counter += 1;
       }
 
-  parsed_argc=parsed_argv_counter-1;
+  char **parsed_argv_2 = malloc(128 * sizeof(char*));
+  int argv_counter = 0;
+  for(int i = parsed_argv_counter-1; i >= 0; i--){
+    parsed_argv_2[i] = parsed_argv[argv_counter];
+    argv_counter++;
+  }
+  for(int i = 0; i < parsed_argv_counter; i++){
+    parsed_argv[i] = parsed_argv_2[i];
+  }
+  parsed_argc=parsed_argv_counter;
 
   parsed_argv[parsed_argv_counter] = 0x0;
 
