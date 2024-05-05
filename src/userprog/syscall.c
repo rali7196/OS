@@ -19,7 +19,7 @@ static struct lock fs_lock;  // lock for file system operations
 
 
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/sc-bad-sp -a sc-bad-sp -- -q  -f run sc-bad-sp
-
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/args-none -a args-none -- -q  -f run args-none
 
 
 void
@@ -28,7 +28,7 @@ syscall_init (void)
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
   lock_init(&fs_lock);
 }
-
+// 0xbfffff18
 static void
 syscall_handler (struct intr_frame *f) 
 {
