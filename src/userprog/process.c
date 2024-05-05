@@ -104,10 +104,11 @@ start_process (void *file_name_)
 
    This function will be implemented in problem 2-2.  For now, it
    does nothing. */
+
 int
 process_wait (tid_t child_tid UNUSED)   // todo: check if already called
 { 
-  while(1){}
+  // while(1){}
   struct thread *child = get_thread_by_tid(child_tid);
   int status;
 
@@ -522,7 +523,7 @@ setup_stack (void **esp)
           // *esp -= strlen(parsed_argv[i]); 
         }
         // hex_dudmp((uintptr_t) *esp, *esp, 1, true);
-        hex_dump((uintptr_t) *esp, *esp, 64, true);
+        // hex_dump((uintptr_t) *esp, *esp, 64, true);
 
 
         //nullterminate the stack pointer array
@@ -551,7 +552,7 @@ setup_stack (void **esp)
           // *esp -= 1;
         }
         // hex_dudmp((uintptr_t) *esp, *esp, 1, true);
-        hex_dump((uintptr_t) *esp, *esp, 64, true);
+        // hex_dump((uintptr_t) *esp, *esp, 64, true);
 
         // *esp -= 
 
@@ -561,7 +562,7 @@ setup_stack (void **esp)
         *esp -= sizeof(char**);
         // memcpy(*esp, &(temp), 1);
         *((char***) *esp) = temp;
-        hex_dump((uintptr_t) *esp, *esp, 64, true);
+        // hex_dump((uintptr_t) *esp, *esp, 64, true);
 
         
 
@@ -571,7 +572,7 @@ setup_stack (void **esp)
         // **esp = parsed_argc;
         // *esp = &parsed_argc;
         memcpy(*esp, &parsed_argc, 1);
-        hex_dump((uintptr_t) *esp, *esp, 64, true);
+        // hex_dump((uintptr_t) *esp, *esp, 64, true);
 
 
         // hex_ddump(0, esp, 16, true);
@@ -582,7 +583,7 @@ setup_stack (void **esp)
         int return_addr = 0;
         memcpy(*esp, &return_addr, 1);
 
-        hex_dump((uintptr_t) *esp, *esp, 64, true);
+        // hex_dump((uintptr_t) *esp, *esp, 64, true);
 
 
 

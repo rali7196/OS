@@ -126,7 +126,7 @@ syscall_handler (struct intr_frame *f)
     }
   }
   else if (syscall_num == SYS_WRITE){
-    printf("calling sys write");
+    // printf("calling sys write");
     int fd = *((int*)f->esp + 1);
     void* buffer = *((void**)f->esp + 2);
     unsigned size = *((unsigned*)f->esp + 3);
