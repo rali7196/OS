@@ -20,6 +20,7 @@ static struct lock fs_lock;  // lock for file system operations
 
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/sc-bad-sp -a sc-bad-sp -- -q  -f run sc-bad-sp
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/args-none -a args-none -- -q  -f run args-none
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/sc-bad-arg -a sc-bad-arg -- -q  -f run sc-bad-arg
 
 
 void
@@ -46,7 +47,14 @@ syscall_handler (struct intr_frame *f)
     shutdown_power_off();
   }
   else if (syscall_num == SYS_EXIT){
+    if (!validate_user_pointer(f->esp+sizeof(int))) {
+      // printf("Invalid ESP in syscall_handler\n"); // debug
+      thread_current()->exit_status = -1;
+      thread_exit();  // Terminate the process if ESP is invalid
+    }
     int status = *((int*)f->esp + 1);
+
+    
     // printf("%s: exit(%d)\n", thread_current()->name, status);
     thread_current()->exit_status = status;
     thread_exit();
@@ -106,6 +114,7 @@ syscall_handler (struct intr_frame *f)
     lock_release(&fs_lock);
   }
   else if (syscall_num == SYS_READ){  
+    lock_acquire(&fs_lock);
     int fd = *((int*)f->esp + 1);
     void* buffer = *((void**)f->esp + 2);
     unsigned size = *((unsigned*)f->esp + 3);
@@ -126,7 +135,6 @@ syscall_handler (struct intr_frame *f)
         thread_current()->exit_status = -1;
         thread_exit();
       }
-      lock_acquire(&fs_lock);
       f->eax = file_read(thread_current()->file_descriptors_table[fd], buffer, size);
       lock_release(&fs_lock);
     }
