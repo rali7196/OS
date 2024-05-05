@@ -109,7 +109,6 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid)   // todo: check if already called
 { 
-  while(1){}
   struct thread *child = get_thread_by_tid(child_tid);
   int status = -1;
   if (!child || child->parent != thread_current()) { // does not work
