@@ -371,7 +371,7 @@ run_task (char **argv)
         parsed_argv_counter += 1;
       }
 
-  parsed_argc=parsed_argv_counter-1;
+  parsed_argc=parsed_argv_counter;
 
   parsed_argv[parsed_argv_counter] = 0x0;
 

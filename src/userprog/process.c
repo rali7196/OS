@@ -107,6 +107,7 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid UNUSED)   // todo: check if already called
 { 
+  while(1){}
   struct thread *child = get_thread_by_tid(child_tid);
   int status;
 
@@ -509,20 +510,23 @@ setup_stack (void **esp)
         // hex_dudmp((uintptr_t)*esp, (*esp), 32, true);
         *esp = PHYS_BASE-4;
 
+        //pushes argument themselves onto stack, and stores where they are stored on the stack
+
         int esp_argv_addrs_curr_idx = 0;
-        char* esp_argv_addrs[parsed_argc+1];
-        for(int i = parsed_argc; i > 0; i--){
+        char* esp_argv_addrs[parsed_argc];
+        for(int i = parsed_argc-1; i >= 0; i--){
           *esp -= strlen(parsed_argv[i])+1; 
           memcpy((*esp), (void*) parsed_argv[i], strlen(parsed_argv[i]));
-          esp_argv_addrs[esp_argv_addrs_curr_idx] = *esp;
+          esp_argv_addrs[esp_argv_addrs_curr_idx] = (char*)*esp;
           esp_argv_addrs_curr_idx += 1;
           // *esp -= strlen(parsed_argv[i]); 
         }
         // hex_dudmp((uintptr_t) *esp, *esp, 1, true);
         hex_dump((uintptr_t) *esp, *esp, 64, true);
 
-        esp_argv_addrs[parsed_argc] = 0x0;
 
+        //nullterminate the stack pointer array
+        esp_argv_addrs[parsed_argc] = 0;
         // uint8_t word_align = 0;
         // *esp -= sizeof(uint8_t);
         // *esp = word_align;
@@ -533,10 +537,17 @@ setup_stack (void **esp)
         // *esp -= sizeof(uint8_t);
         // **esp = 0;
 
-        for(int i = parsed_argc; i > 0; i--){
+        // *esp -= sizeof(char*);
+        // memset(*esp, 0, 1);
+
+        //copy the addresses of stack pointers to stack
+        for(int i = parsed_argc ; i >= 0; i--){
           *esp -= sizeof(char*);
           // *esp = esp_argv_addrs[i];
-          memcpy(*esp, &esp_argv_addrs[i], 1);
+          char** addr_to_push = &esp_argv_addrs[i];
+          // memcpy(*esp, addr_to_push, 1);
+          //cast pointer to proper type
+          *((char**) *esp) = esp_argv_addrs[i];
           // hex_dudmp(0, esp, 16, true);
           // *esp -= 1;
         }
@@ -544,13 +555,20 @@ setup_stack (void **esp)
         hex_dump((uintptr_t) *esp, *esp, 64, true);
 
         // *esp -= 
-        *esp -= sizeof(&(esp_argv_addrs[0]));
-        memcpy(*esp, &(esp_argv_addrs[0]), 1);
+
+        //push beginning of argv onto the stack
+
+        char** temp = (char**) *esp;
+        *esp -= sizeof(char**);
+        // memcpy(*esp, &(temp), 1);
+        *((char***) *esp) = temp;
         hex_dump((uintptr_t) *esp, *esp, 64, true);
 
         
+
+        //push argc onto the stack
         // hex_dudmp(0, esp, 16, true);
-        *esp -= sizeof(int*);
+        *esp -= sizeof(int);
         // **esp = parsed_argc;
         // *esp = &parsed_argc;
         memcpy(*esp, &parsed_argc, 1);
@@ -559,14 +577,11 @@ setup_stack (void **esp)
 
         // hex_ddump(0, esp, 16, true);
         // void(*fake_return_addr)();
-
-        *esp -= sizeof(fake_return);
-
-
-        // fake_return_addr = fake_return;
-
-
-        memcpy(*esp, &fake_return, 1);
+        
+        //push fake return address onto the stack
+        *esp -= sizeof(int*);
+        int return_addr = 0;
+        memcpy(*esp, &return_addr, 1);
 
         hex_dump((uintptr_t) *esp, *esp, 64, true);
 
