@@ -286,20 +286,16 @@ thread_exit (void)
 
   struct thread *cur = thread_current();
   
-  // Close all open file descriptors.
-  for (int i = 0; i < 256; i++) {
+  // Close all open file descriptors
+  //  not sure if i need it here, since it's also done in process_exit()
+  for (int i = 0; i < MAX_FILE_DESCRIPTORS; i++) {
       if (cur->file_descriptors_table[i] != NULL) {
           file_close(cur->file_descriptors_table[i]);
           cur->file_descriptors_table[i] = NULL;
       }
   }
 
-  // deal with children??
-
-  // Notify parent that we are exiting
-  if (cur->parent) {
-    sema_up(&cur->parent->sema_wait);
-  }
+  // to-do: deal with children?? what is there's children that are still running?
 
 
 #ifdef USERPROG
@@ -312,6 +308,9 @@ thread_exit (void)
   intr_disable ();
   list_remove (&thread_current()->allelem);
   thread_current ()->status = THREAD_DYING;
+
+  sema_up(&cur->sema_wait); // signal process_wait() that this thread is done
+
   schedule ();
   NOT_REACHED ();
 }
