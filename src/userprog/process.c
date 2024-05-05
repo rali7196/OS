@@ -544,7 +544,6 @@ setup_stack (void **esp)
         for(int i = parsed_argc ; i >= 0; i--){
           *esp -= sizeof(char*);
           // *esp = esp_argv_addrs[i];
-          char** addr_to_push = &esp_argv_addrs[i];
           // memcpy(*esp, addr_to_push, 1);
           //cast pointer to proper type
           *((char**) *esp) = esp_argv_addrs[i];
