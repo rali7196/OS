@@ -17,6 +17,11 @@ static bool validate_user_pointer (const void *ptr);  // implemented for project
 static bool validate_file_descriptor(int fd);
 static struct lock fs_lock;  // lock for file system operations
 
+
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/sc-bad-sp -a sc-bad-sp -- -q  -f run sc-bad-sp
+
+
+
 void
 syscall_init (void) 
 {
@@ -30,7 +35,7 @@ syscall_handler (struct intr_frame *f)
   // printf ("system call!\n");
 
   if (!validate_user_pointer(f->esp)) { // to-do: add user mem check for read/write
-    printf("Invalid ESP in syscall_handler\n"); // debug
+    //printf("Invalid ESP in syscall_handler\n"); // debug
     thread_current()->exit_status = -1;
     thread_exit();  // Terminate the process if ESP is invalid
   }
@@ -199,7 +204,7 @@ syscall_handler (struct intr_frame *f)
 /*Return false if the given pointer is NULL, out of user space, or not in its page*/
 static bool 
 validate_user_pointer (const void *ptr) {
-  if (!ptr)
+  if (!ptr) 
     return false;
   if (!is_user_vaddr(ptr))
     return false;
