@@ -24,6 +24,7 @@ static struct lock fs_lock;  // lock for file system operations
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/sc-bad-arg -a sc-bad-arg -- -q  -f run sc-bad-arg
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/sc-boundary-3 -a sc-boundary-3 -- -q  -f run sc-boundary-3
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/create-null -a create-null -- -q  -f run create-null
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/open-null -a open-null -- -q  -f run open-null
 
 void
 syscall_init (void) 
@@ -116,6 +117,11 @@ syscall_handler (struct intr_frame *f)
   }
   else if (syscall_num == SYS_OPEN){
     char* file_name = *((char**)f->esp + 1);
+    if (!validate_user_pointer(file_name)) {
+    // printf("Invalid ESP in syscall_handler\n"); // debug
+      thread_current()->exit_status = -1;
+      thread_exit();  // Terminate the process if ESP is invalid
+    }
     lock_acquire(&fs_lock);
     struct file* file = filesys_open(file_name);
     if (!file){
@@ -259,3 +265,4 @@ validate_file_descriptor(int fd){
   }
   return true;
 }
+
