@@ -50,17 +50,14 @@ process_execute (const char *file_name)
   if (tid == TID_ERROR) {
     palloc_free_page (fn_copy); 
     return TID_ERROR;
+  } else {
+    struct thread *child = get_thread_by_tid(tid);
+    if (child) {
+        child->parent = thread_current(); // Set the parent pointer
+    }
+    // add child thread to parent's children list
+    list_push_back(&thread_current()->children_list, &child->allelem);
   }
-
-  // project 2 
-  // struct thread *child_thread = get_thread_by_tid(tid);
-  // if (child_thread != NULL) {
-  //   list_push_back(&thread_current()->children_list, &child_thread->allelem);
-  //   for (int i = 0; i < 256; i++) {
-  //     child_thread->file_descriptors_table[i] = thread_current()->file_descriptors_table[i];
-  //   }
-  //   child_thread->parent_tid = thread_current()->tid;
-  // }
   return tid;
 }
 
@@ -110,20 +107,16 @@ start_process (void *file_name_)
 // clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/args-multiple -a args-multiple -- -q  -f run 'args-multiple some arguments for you!'
 //
 int
-process_wait (tid_t child_tid UNUSED)   // todo: check if already called
+process_wait (tid_t child_tid)   // todo: check if already called
 { 
   while(1){}
   struct thread *child = get_thread_by_tid(child_tid);
-  int status;
-
-  if (!child || child->parent_tid != thread_current()->tid) {
-      return -1; // TID is invalid or not a child of the calling process.
+  int status = -1;
+  if (!child || child->parent != thread_current()) { // does not work
+    return status; // TID is invalid or not a child of the calling process.
   }
-
-  sema_down(&child->sema_wait);
-  status = child->exit_status;
-  sema_up(&child->sema_wait);
-
+  sema_down(&child->sema_wait); // sema initially 0, so this will block until the child calls thread_exits
+  status = child->exit_status;  
   return status;
 }
  
@@ -136,7 +129,7 @@ process_exit (void)
   uint32_t *pd;
 
   // close file discriptors
-  for (int i = 0; i < 256; i++) {
+  for (int i = 0; i < MAX_FILE_DESCRIPTORS; i++) {
       if (cur->file_descriptors_table[i] != NULL) {
           file_close(cur->file_descriptors_table[i]);
           cur->file_descriptors_table[i] = NULL;

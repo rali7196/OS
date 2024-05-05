@@ -11,6 +11,7 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "filesys/file.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -285,23 +286,16 @@ thread_exit (void)
 
   struct thread *cur = thread_current();
   
-  // Close all open file descriptors.
-  for (int i = 0; i < 256; i++) {
+  // Close all open file descriptors
+  //  not sure if i need it here, since it's also done in process_exit()
+  for (int i = 0; i < MAX_FILE_DESCRIPTORS; i++) {
       if (cur->file_descriptors_table[i] != NULL) {
           file_close(cur->file_descriptors_table[i]);
           cur->file_descriptors_table[i] = NULL;
       }
   }
 
-  // deal with children??
-
-  // Notify parent that we are exiting
-  if (cur->parent_tid != (-1 || NULL)) {
-    struct thread *parent = get_thread_by_tid(cur->parent_tid);
-    if (parent != NULL) {
-      sema_up(&parent->sema_wait);
-    }
-  }
+  // to-do: deal with children?? what is there's children that are still running?
 
 
 #ifdef USERPROG
@@ -314,6 +308,9 @@ thread_exit (void)
   intr_disable ();
   list_remove (&thread_current()->allelem);
   thread_current ()->status = THREAD_DYING;
+
+  sema_up(&cur->sema_wait); // signal process_wait() that this thread is done
+
   schedule ();
   NOT_REACHED ();
 }
@@ -633,5 +630,5 @@ bool is_child_of_current_thread(tid_t tid){
   if(t == NULL){
     return false;
   }
-  return t->parent_tid == thread_current()->tid;
+  return t->parent == thread_current();
 }
