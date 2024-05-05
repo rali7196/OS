@@ -110,6 +110,13 @@ struct thread
     unsigned magic;                     /**< Detects stack overflow. */
   };
 
+struct process_info {
+    tid_t tid;                 /**< The TID of the thread. */
+    int exit_status;           /**< Exit status of the process. */
+   //  struct semaphore sema_wait;/**< Semaphore to signal parent upon child exit. */
+    struct list_elem elem;     /**< List element to store in parent's child list. */
+};
+
 /** If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
    Controlled by kernel command-line option "-o mlfqs". */
