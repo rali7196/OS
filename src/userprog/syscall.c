@@ -29,8 +29,8 @@ syscall_handler (struct intr_frame *f)
 {
   // printf ("system call!\n");
 
-  if (!validate_user_pointer(f->esp)) { // to-do: add user mem check for read/write
-    printf("Invalid ESP in syscall_handler\n"); // debug
+  if (!validate_user_pointer(f->esp)) {
+    // printf("Invalid ESP in syscall_handler\n"); // debug
     thread_current()->exit_status = -1;
     thread_exit();  // Terminate the process if ESP is invalid
   }
@@ -42,13 +42,14 @@ syscall_handler (struct intr_frame *f)
   }
   else if (syscall_num == SYS_EXIT){
     int status = *((int*)f->esp + 1);
+    // printf("%s: exit(%d)\n", thread_current()->name, status);
     thread_current()->exit_status = status;
     thread_exit();
   }
   else if (syscall_num == SYS_EXEC){  // "pass arguments?"
     char* file_name = *((char**)f->esp + 1);
     if (!validate_user_pointer(file_name)){
-      printf("Invalid file name in SYS_EXEC\n"); // debug
+      // printf("Invalid file name in SYS_EXEC\n"); // debug
       f->eax = -1;
       // thread_exit();
     }
@@ -104,7 +105,7 @@ syscall_handler (struct intr_frame *f)
     void* buffer = *((void**)f->esp + 2);
     unsigned size = *((unsigned*)f->esp + 3);
     if (!validate_user_pointer(buffer) || !validate_user_pointer(buffer + size - 1)){ // check buffer validity
-      printf("Invalid buffer in SYS_READ\n"); // debug
+      // printf("Invalid buffer in SYS_READ\n"); // debug
       f->eax = -1;
       thread_current()->exit_status = -1;
       thread_exit();
@@ -131,7 +132,7 @@ syscall_handler (struct intr_frame *f)
     void* buffer = *((void**)f->esp + 2);
     unsigned size = *((unsigned*)f->esp + 3);
     if (!validate_user_pointer(buffer) || !validate_user_pointer(buffer + size - 1)){ // check buffer validity
-      printf("Invalid buffer in SYS_WRITE\n"); // debug
+      // printf("Invalid buffer in SYS_WRITE\n"); // debug
       f->eax = -1;
       thread_current()->exit_status = -1;
       thread_exit();
@@ -158,7 +159,7 @@ syscall_handler (struct intr_frame *f)
       thread_exit();
     }
     if (!validate_user_pointer((void*)(f->esp + 2))) {
-      printf("Invalid position in SYS_SEEK\n"); // debug
+      // printf("Invalid position in SYS_SEEK\n"); // debug
       thread_current()->exit_status = -1;
       thread_exit();
     }
@@ -190,9 +191,9 @@ syscall_handler (struct intr_frame *f)
     lock_release(&fs_lock);
     thread_current()->file_descriptors_table[fd] = NULL;
   }
-  else {  // to-do: add proper error handling
-    printf("Invalid system call number\n");
-  }
+  // else {  // to-do: add proper error handling
+  //   printf("Invalid system call number\n");
+  // }
   // thread_exit ();
 }
 
@@ -211,7 +212,7 @@ validate_user_pointer (const void *ptr) {
 static bool
 validate_file_descriptor(int fd){
   if (fd < 2 || fd > 255 || !thread_current()->file_descriptors_table[fd]){
-    printf("Invalid file descriptor in validate_file_discriptor\n"); // debug
+    // printf("Invalid file descriptor in validate_file_discriptor\n"); // debug
     return false;
   }
   return true;
