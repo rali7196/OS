@@ -105,10 +105,14 @@ start_process (void *file_name_)
    This function will be implemented in problem 2-2.  For now, it
    does nothing. */
 
+
+// clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/args-dbl-space -a args-dbl-space -- -q  -f run 'args-dbl-space two  spaces!'
+// clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/args-multiple -a args-multiple -- -q  -f run 'args-multiple some arguments for you!'
+//
 int
 process_wait (tid_t child_tid UNUSED)   // todo: check if already called
 { 
-  // while(1){}
+  while(1){}
   struct thread *child = get_thread_by_tid(child_tid);
   int status;
 
