@@ -27,6 +27,10 @@ static struct lock fs_lock;  // lock for file system operations
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/open-null -a open-null -- -q  -f run open-null
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/bad-read -a bad-read -- -q  -f run bad-read 
 //clear && make all && pintos -v -k -T 60 --qemu --filesys-size=2 -p tests/userprog/bad-read -a bad-read -- -q  -f run bad-read < /dev/null
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/exec-once -a exec-once -p tests/userprog/child-simple -a child-simple -- -q  -f run exec-once
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/wait-simple -a wait-simple -p tests/userprog/child-simple -a child-simple -- -q  -f run wait-simple
+//
+
 void
 syscall_init (void) 
 {
@@ -71,19 +75,22 @@ syscall_handler (struct intr_frame *f)
     thread_current()->exit_status = status;
     thread_exit();
   }
+
   else if (syscall_num == SYS_EXEC){  // "pass arguments?"
     char* file_name = *((char**)f->esp + 1);
     if (!validate_user_pointer(file_name)){
       // printf("Invalid file name in SYS_EXEC\n"); // debug
-      f->eax = -1;
-      // thread_exit();
+      thread_current()->exit_status = -1;
+      thread_exit();  // Terminate the process if ESP is invalid
     }
     f->eax = process_execute(file_name); // will return -1 if error
   }
+  
   else if (syscall_num == SYS_WAIT){
     tid_t pid = *((tid_t*)f->esp + 1);
     f->eax = process_wait(pid); // process_wait should handle invalid pid
   }
+
   else if (syscall_num == SYS_CREATE){  // create a new file with the given name and size
 
     //validate first argument
