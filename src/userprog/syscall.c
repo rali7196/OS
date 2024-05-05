@@ -11,11 +11,19 @@
 #include "devices/input.h"
 #include "devices/shutdown.h"
 #include "threads/synch.h"
+#include <string.h>
 
 static void syscall_handler (struct intr_frame *);
 static bool validate_user_pointer (const void *ptr);  // implemented for project 2
 static bool validate_file_descriptor(int fd);
 static struct lock fs_lock;  // lock for file system operations
+
+
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/sc-bad-sp -a sc-bad-sp -- -q  -f run sc-bad-sp
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/args-none -a args-none -- -q  -f run args-none
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/sc-bad-arg -a sc-bad-arg -- -q  -f run sc-bad-arg
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/sc-boundary-3 -a sc-boundary-3 -- -q  -f run sc-boundary-3
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/create-null -a create-null -- -q  -f run create-null
 
 void
 syscall_init (void) 
@@ -23,13 +31,21 @@ syscall_init (void)
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
   lock_init(&fs_lock);
 }
-
+// 0xbfffff18
 static void
 syscall_handler (struct intr_frame *f) 
 {
   // printf ("system call!\n");
 
+  //check lower bound of memory to ensure that it is okay
   if (!validate_user_pointer(f->esp)) {
+    // printf("Invalid ESP in syscall_handler\n"); // debug
+    thread_current()->exit_status = -1;
+    thread_exit();  // Terminate the process if ESP is invalid
+  }
+
+  //check upper bound of memory to ensure that it is okay
+  if (!validate_user_pointer(f->esp+sizeof(int))) {
     // printf("Invalid ESP in syscall_handler\n"); // debug
     thread_current()->exit_status = -1;
     thread_exit();  // Terminate the process if ESP is invalid
@@ -41,7 +57,14 @@ syscall_handler (struct intr_frame *f)
     shutdown_power_off();
   }
   else if (syscall_num == SYS_EXIT){
+    if (!validate_user_pointer(f->esp+sizeof(int))) {
+      // printf("Invalid ESP in syscall_handler\n"); // debug
+      thread_current()->exit_status = -1;
+      thread_exit();  // Terminate the process if ESP is invalid
+    }
     int status = *((int*)f->esp + 1);
+
+    
     // printf("%s: exit(%d)\n", thread_current()->name, status);
     thread_current()->exit_status = status;
     thread_exit();
@@ -60,8 +83,27 @@ syscall_handler (struct intr_frame *f)
     f->eax = process_wait(pid); // process_wait should handle invalid pid
   }
   else if (syscall_num == SYS_CREATE){  // create a new file with the given name and size
+
+    //validate first argument
+
     char* file_name = *((char**)f->esp + 1);
+    if (!validate_user_pointer(file_name)) {
+    // printf("Invalid ESP in syscall_handler\n"); // debug
+      thread_current()->exit_status = -1;
+      thread_exit();  // Terminate the process if ESP is invalid
+    }
+    if (!validate_user_pointer(file_name + strlen(file_name))) {
+    // printf("Invalid ESP in syscall_handler\n"); // debug
+      thread_current()->exit_status = -1;
+      thread_exit();  // Terminate the process if ESP is invalid
+    }
     unsigned initial_size = *((unsigned*)f->esp + 2);
+    //validate second argument
+    if (!validate_user_pointer(f->esp+2)) {
+    // printf("Invalid ESP in syscall_handler\n"); // debug
+      thread_current()->exit_status = -1;
+      thread_exit();  // Terminate the process if ESP is invalid
+    }
     lock_acquire(&fs_lock);
     f->eax = filesys_create(file_name, initial_size);
     lock_release(&fs_lock);
@@ -101,6 +143,7 @@ syscall_handler (struct intr_frame *f)
     lock_release(&fs_lock);
   }
   else if (syscall_num == SYS_READ){  
+    lock_acquire(&fs_lock);
     int fd = *((int*)f->esp + 1);
     void* buffer = *((void**)f->esp + 2);
     unsigned size = *((unsigned*)f->esp + 3);
@@ -121,7 +164,6 @@ syscall_handler (struct intr_frame *f)
         thread_current()->exit_status = -1;
         thread_exit();
       }
-      lock_acquire(&fs_lock);
       f->eax = file_read(thread_current()->file_descriptors_table[fd], buffer, size);
       lock_release(&fs_lock);
     }
@@ -200,7 +242,7 @@ syscall_handler (struct intr_frame *f)
 /*Return false if the given pointer is NULL, out of user space, or not in its page*/
 static bool 
 validate_user_pointer (const void *ptr) {
-  if (!ptr)
+  if (!ptr) 
     return false;
   if (!is_user_vaddr(ptr))
     return false;
