@@ -29,8 +29,8 @@ static struct lock fs_lock;  // lock for file system operations
 //clear && make all && pintos -v -k -T 60 --qemu --filesys-size=2 -p tests/userprog/bad-read -a bad-read -- -q  -f run bad-read < /dev/null
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/exec-once -a exec-once -p tests/userprog/child-simple -a child-simple -- -q  -f run exec-once
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/wait-simple -a wait-simple -p tests/userprog/child-simple -a child-simple -- -q  -f run wait-simple
-//
-
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/args-multiple -a args-multiple -- -q  -f run 'args-multiple some arguments for you!'
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/exec-arg -a exec-arg -p tests/userprog/child-args -a child-args -- -q  -f run exec-arg
 void
 syscall_init (void) 
 {

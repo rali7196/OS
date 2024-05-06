@@ -22,8 +22,13 @@
 
 #define MAX_ARGS 128
 
-extern char** parsed_argv;
-extern int parsed_argc;
+
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/exec-arg -a exec-arg -p tests/userprog/child-args -a child-args -- -q  -f run exec-arg
+
+
+char** parsed_argv;
+int parsed_argc;
+char process_name[512];
 
 static thread_func start_process NO_RETURN;
 void fake_return(void);
@@ -85,6 +90,38 @@ start_process (void *file_name_)
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
+  //put argparsing here, add another argument to setup stack and load to take in string arguments
+
+
+
+  char* token, *save_ptr;
+
+  parsed_argv = malloc(128 * sizeof(char*));
+  
+  int parsed_argv_counter = 0;
+  for (token = strtok_r (file_name, " ", &save_ptr); token != NULL;
+      token = strtok_r (NULL, " ", &save_ptr)){
+        parsed_argv[parsed_argv_counter] = token;
+        // printf("%s\n", token);
+        parsed_argv_counter += 1;
+      }
+
+  char **parsed_argv_2 = malloc(128 * sizeof(char*));
+  int argv_counter = 0;
+  for(int i = parsed_argv_counter-1; i >= 0; i--){
+    parsed_argv_2[i] = parsed_argv[argv_counter];
+    argv_counter++;
+  }
+  for(int i = 0; i < parsed_argv_counter; i++){
+    parsed_argv[i] = parsed_argv_2[i];
+  }
+  parsed_argc=parsed_argv_counter;
+
+  parsed_argv[parsed_argv_counter] = 0x0;
+  // thread_current()->process_name_for_termination_message = file_name;
+  strlcpy(process_name, file_name, strlen(file_name)+1);
+  
+
   success = load (file_name, &if_.eip, &if_.esp);
 
   /* If load failed, quit. */
@@ -139,7 +176,7 @@ process_wait (tid_t child_tid)   // todo: check if already called
 
     list_remove(&child_info->elem);
     free(child_info);
-    printf("%s: exit(%d)\n", parsed_argv[parsed_argc-1], status);
+    printf("%s: exit(%d)\n", process_name, status);
     return status;
 }
  
