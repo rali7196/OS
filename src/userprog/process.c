@@ -112,12 +112,9 @@ process_execute (const char *file_name)
   } else {
     struct thread *child = get_thread_by_tid(tid);
     if (child) {
-        child->parent = thread_current(); // Set the parent pointer
-
-        list_push_back(&thread_current()->children_list, &child->allelem);
+      child->parent = thread_current(); // Set the parent pointer
     }
     // add child thread to parent's children list
-    // list_push_back(&thread_current()->children_list, &child->allelem);
     struct process_info *child_info = malloc(sizeof(struct process_info));
     if (child_info) {
       child->process_info = child_info;
@@ -207,32 +204,36 @@ start_process (void *file_name_)
 
 // clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/args-dbl-space -a args-dbl-space -- -q  -f run 'args-dbl-space two  spaces!'
 // clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/args-multiple -a args-multiple -- -q  -f run 'args-multiple some arguments for you!'
-//
+// pintos -v -k -T 300 --qemu  --filesys-size=2 -p tests/filesys/base/syn-read -a syn-read -p tests/filesys/base/child-syn-read -a child-syn-read -- -q  -f run syn-read
+// pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/filesys/base/syn-write -a syn-write -p tests/filesys/base/child-syn-wrt -a child-syn-wrt -- -q  -f run syn-write 
 int
 process_wait (tid_t child_tid)   // todo: check if already called
 { 
-    struct list_elem *e;
-    struct process_info *child_info = NULL;
+  // printf("process_wait\n");
+  struct list_elem *e;
+  struct process_info *child_info = NULL;
 
-    // find the child info from parent's children list
-    for (e = list_begin(&thread_current()->children_list); e != list_end(&thread_current()->children_list); e = list_next(e)) {
-        struct process_info *info = list_entry(e, struct process_info, elem);
-        if (info->tid == child_tid) {
-            child_info = info;
-            break;
-        }
-    }
-    if (!child_info) {
-        return -1;
-    }
+  // find the child info from parent's children list
+  for (e = list_begin(&thread_current()->children_list); e != list_end(&thread_current()->children_list); e = list_next(e)) {
+      struct process_info *info = list_entry(e, struct process_info, elem);
+      if (info->tid == child_tid) {
+        // printf("found child\n");
+        child_info = info;
+        break;
+      }
+  }
+  if (!child_info) {
+    // printf("child not found\n");
+    return -1;
+  }
 
-    sema_down(&child_info->sema_wait);
-    int status = child_info->exit_status;
+  sema_down(&child_info->sema_wait);
+  int status = child_info->exit_status;
 
-    list_remove(&child_info->elem);
-    free(child_info);
-    printf("%s: exit(%d)\n", thread_current()->name2, status);
-    return status;
+  list_remove(&child_info->elem);
+  free(child_info);
+  printf("%s: exit(%d)\n", thread_current()->name2, status);
+  return status;
 }
  
 

@@ -31,18 +31,17 @@ static struct lock fs_lock;  // lock for file system operations
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/wait-simple -a wait-simple -p tests/userprog/child-simple -a child-simple -- -q  -f run wait-simple
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/args-multiple -a args-multiple -- -q  -f run 'args-multiple some arguments for you!'
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/exec-arg -a exec-arg -p tests/userprog/child-args -a child-args -- -q  -f run exec-arg
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/filesys/base/syn-remove -a syn-remove -- -q  -f run syn-remove
 void
 syscall_init (void) 
 {
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
   lock_init(&fs_lock);
-}
+} 
 // 0xbfffff18
 static void
 syscall_handler (struct intr_frame *f) 
 {
-  // printf ("system call!\n");
-
   //check lower bound of memory to ensure that it is okay
   if (!validate_user_pointer(f->esp)) {
     // printf("Invalid ESP in syscall_handler\n"); // debug
@@ -87,13 +86,14 @@ syscall_handler (struct intr_frame *f)
     if (file_name == NULL || !validate_user_pointer(file_name) || strlen(file_name) == 0) {
         f->eax = -1;
         thread_current()->exit_status = -1;
-        thread_exit();
+        thread_exit(); 
     }
     // to-do: Check if the file exists 
 
     tid_t pid = process_execute(file_name); // will return -1 if error
     if (pid == TID_ERROR || pid == -1) {
       // printf("Error in process_execute\n");
+      f->eax = -1;
       thread_current()->exit_status = -1;
       thread_exit();
     }
@@ -175,32 +175,35 @@ syscall_handler (struct intr_frame *f)
     lock_release(&fs_lock);
   }
   else if (syscall_num == SYS_READ){  
-    lock_acquire(&fs_lock);
     if (!validate_user_pointer(f->esp+1)) {
-    // printf("Invalid ESP in syscall_handler\n"); // debug
-      lock_release(&fs_lock);
       thread_current()->exit_status = -1;
-      thread_exit();  // Terminate the process if ESP is invalid
-      
+      // printf("Invalid fd in SYS_READ\n"); // debug
+      thread_exit();
     }
     int fd = *((int*)f->esp + 1);
 
+    if (!validate_user_pointer(f->esp + 2)) {
+      thread_current()->exit_status = -1;
+      // printf("Invalid buffer in SYS_READ\n"); // debug
+      thread_exit();
+    }
+
     void* buffer = *((void**)f->esp + 2);
     if (!validate_user_pointer(f->esp + 3)) {
-    // printf("Invalid ESP in syscall_handler\n"); // debug
-      lock_release(&fs_lock);
       thread_current()->exit_status = -1;
-      thread_exit();  // Terminate the process if ESP is invalid
+      // printf("Invalid buffer size in SYS_READ\n"); // debug
+      thread_exit();
     }    
     unsigned size = *((unsigned*)f->esp + 3);
 
 
     if (!validate_user_pointer(buffer) || !validate_user_pointer(buffer + size - 1)){ // check buffer validity
-      // printf("Invalid buffer in SYS_READ\n"); // debug
       f->eax = -1;
       thread_current()->exit_status = -1;
+      // printf("Invalid end of buffer in SYS_READ\n"); // debug
       thread_exit();
     }
+    lock_acquire(&fs_lock);
     if (fd == 0){ // read from input_getc
       for (unsigned i = 0; i < size; i++){
         *((char*)buffer + i) = input_getc();
@@ -211,10 +214,12 @@ syscall_handler (struct intr_frame *f)
         f->eax = -1;
         thread_current()->exit_status = -1;
         thread_exit();
+        lock_release(&fs_lock);
+      }else{
+        f->eax = file_read(thread_current()->file_descriptors_table[fd], buffer, size);
       }
-      f->eax = file_read(thread_current()->file_descriptors_table[fd], buffer, size);
-      lock_release(&fs_lock);
     }
+    lock_release(&fs_lock);
   }
   else if (syscall_num == SYS_WRITE){
     // printf("calling sys write");
