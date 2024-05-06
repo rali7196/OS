@@ -49,8 +49,8 @@
 
 
 
-char** parsed_argv;
-int parsed_argc;
+// char** parsed_argv;
+// int parsed_argc;
 
 /** Page directory with kernel mappings only. */
 uint32_t *init_page_dir;
@@ -196,7 +196,7 @@ pintos_init (void)
 
   /* Finish up. */
   shutdown_configure (SHUTDOWN_POWER_OFF);
-  free(parsed_argv);
+  // free(parsed_argv);
   shutdown ();
   thread_exit ();
 }
@@ -359,30 +359,7 @@ run_task (char **argv)
   //    'to'
   //    'tokenize.'
 
-  char* token, *save_ptr;
 
-  parsed_argv = malloc(128 * sizeof(char*));
-  
-  int parsed_argv_counter = 0;
-  for (token = strtok_r (argv[1], " ", &save_ptr); token != NULL;
-      token = strtok_r (NULL, " ", &save_ptr)){
-        parsed_argv[parsed_argv_counter] = token;
-        printf("%s\n", token);
-        parsed_argv_counter += 1;
-      }
-
-  char **parsed_argv_2 = malloc(128 * sizeof(char*));
-  int argv_counter = 0;
-  for(int i = parsed_argv_counter-1; i >= 0; i--){
-    parsed_argv_2[i] = parsed_argv[argv_counter];
-    argv_counter++;
-  }
-  for(int i = 0; i < parsed_argv_counter; i++){
-    parsed_argv[i] = parsed_argv_2[i];
-  }
-  parsed_argc=parsed_argv_counter;
-
-  parsed_argv[parsed_argv_counter] = 0x0;
 
   
 
