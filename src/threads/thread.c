@@ -284,17 +284,6 @@ thread_exit (void)
 {
   ASSERT (!intr_context ());
 
-  struct thread *cur = thread_current();
-  
-  // Close all open file descriptors
-  //  not sure if i need it here, since it's also done in process_exit()
-  for (int i = 0; i < MAX_FILE_DESCRIPTORS; i++) {
-      if (cur->file_descriptors_table[i] != NULL) {
-          file_close(cur->file_descriptors_table[i]);
-          cur->file_descriptors_table[i] = NULL;
-      }
-  }
-
   // to-do: deal with children?? what if there's children that are still running?
 
 
@@ -308,20 +297,6 @@ thread_exit (void)
   intr_disable ();
   list_remove (&thread_current()->allelem);
   thread_current ()->status = THREAD_DYING;
-
-  // sema_up(&cur->sema_wait); // signal process_wait() that this thread is done
-
-  // signal process_wait() that this thread is done, update sema_wait in process_info
-  // struct list_elem *e;
-  // struct thread *t;
-  // for (e = list_begin (&cur->parent->children_list); e != list_end (&cur->parent->children_list); e = list_next (e)) {
-  //   t = list_entry (e, struct thread, elem);
-  //   if(t && t->tid && t->tid == cur->tid){
-  //     struct process_info *info = list_entry(e, struct process_info, elem);
-  //     sema_up(&info->sema_wait);
-  //     break;
-  //   }
-  // }
   
   schedule ();
   NOT_REACHED ();
