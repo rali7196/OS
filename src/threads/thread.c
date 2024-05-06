@@ -295,7 +295,7 @@ thread_exit (void)
       }
   }
 
-  // to-do: deal with children?? what is there's children that are still running?
+  // to-do: deal with children?? what if there's children that are still running?
 
 
 #ifdef USERPROG
@@ -309,8 +309,21 @@ thread_exit (void)
   list_remove (&thread_current()->allelem);
   thread_current ()->status = THREAD_DYING;
 
-  sema_up(&cur->sema_wait); // signal process_wait() that this thread is done
 
+  // sema_up(&cur->sema_wait); // signal process_wait() that this thread is done
+
+  // signal process_wait() that this thread is done, update sema_wait in process_info
+  struct list_elem *e;
+  struct thread *t;
+  for (e = list_begin (&cur->parent->children_list); e != list_end (&cur->parent->children_list); e = list_next (e)) {
+    t = list_entry (e, struct thread, elem);
+    if(t && t->tid && t->tid == cur->tid){
+      struct process_info *info = list_entry(e, struct process_info, elem);
+      sema_up(&info->sema_wait);
+      break;
+    }
+  }
+  
   schedule ();
   NOT_REACHED ();
 }
@@ -485,7 +498,7 @@ init_thread (struct thread *t, const char *name, int priority)
 
   t->exit_status = 0;
   list_init(&t->children_list);
-  sema_init(&t->sema_wait, 0);
+  // sema_init(&t->sema_wait, 0); moved to process_info
   for (int i = 0; i < 256; i++) {
     t->file_descriptors_table[i] = NULL;
   }
@@ -617,7 +630,7 @@ struct thread *get_thread_by_tid(tid_t tid){
   struct thread *t;
   for (e = list_begin (&all_list); e != list_end (&all_list); e = list_next (e)) {
       t = list_entry (e, struct thread, allelem);
-      if(t->tid == tid){
+      if(t && t->tid && t->tid == tid){
         return t;
       }
     }
@@ -632,3 +645,4 @@ bool is_child_of_current_thread(tid_t tid){
   }
   return t->parent == thread_current();
 }
+
