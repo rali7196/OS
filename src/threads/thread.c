@@ -309,7 +309,6 @@ thread_exit (void)
   list_remove (&thread_current()->allelem);
   thread_current ()->status = THREAD_DYING;
 
-
   // sema_up(&cur->sema_wait); // signal process_wait() that this thread is done
 
   // signal process_wait() that this thread is done, update sema_wait in process_info

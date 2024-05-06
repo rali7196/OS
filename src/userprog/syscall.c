@@ -77,17 +77,28 @@ syscall_handler (struct intr_frame *f)
   }
 
   else if (syscall_num == SYS_EXEC){  // "pass arguments?"
-    char* file_name = *((char**)f->esp + 1);
-    if (!validate_user_pointer(file_name)){
-      // printf("Invalid file name in SYS_EXEC\n"); // debug
-      thread_current()->exit_status = -1;
-      thread_exit();  // Terminate the process if ESP is invalid
+    if (!validate_user_pointer((char **)f->esp + 1)) {
+        thread_current()->exit_status = -1;
+        thread_exit();
     }
-    f->eax = process_execute(file_name); // will return -1 if error
+    char* file_name = *((char**)f->esp + 1);
+    // Validate the file_name pointer
+    if (file_name == NULL || !validate_user_pointer(file_name) || strlen(file_name) == 0) {
+        thread_current()->exit_status = -1;
+        thread_exit();
+    }
+    tid_t pid = process_execute(file_name); // will return -1 if error
+    if (pid == TID_ERROR || pid == -1) {
+      printf("Error in process_execute\n");
+      thread_current()->exit_status = -1;
+      thread_exit();
+    }
+    printf("pid: %d\n", pid);
+    f->eax = pid;
   }
   
   else if (syscall_num == SYS_WAIT){
-    if (!validate_user_pointer(f->esp+1)) {
+    if (!is_user_vaddr(f->esp) || !is_user_vaddr((tid_t *)f->esp + 1)) {
       thread_current()->exit_status = -1;
       thread_exit();  // Terminate the process if ESP is invalid
     }

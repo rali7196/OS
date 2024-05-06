@@ -55,11 +55,13 @@ process_execute (const char *file_name)
     struct thread *child = get_thread_by_tid(tid);
     if (child) {
         child->parent = thread_current(); // Set the parent pointer
+        list_push_back(&thread_current()->children_list, &child->allelem);
     }
     // add child thread to parent's children list
-    list_push_back(&thread_current()->children_list, &child->allelem);
+    // list_push_back(&thread_current()->children_list, &child->allelem);
     struct process_info *child_info = malloc(sizeof(struct process_info));
     if (child_info) {
+      child->process_info = child_info;
       child_info->tid = tid;
       sema_init(&child_info->sema_wait, 0);
       list_push_back(&thread_current()->children_list, &child_info->elem);
@@ -149,28 +151,14 @@ process_exit (void)
   struct thread *cur = thread_current ();
   uint32_t *pd;
 
+  ASSERT(cur->parent != NULL);
+  ASSERT(cur->process_info != NULL);
 
-  struct process_info *info = NULL;
+  if (cur->process_info != NULL) {
+      cur->process_info->exit_status = cur->exit_status; // Update exit status
+      sema_up(&cur->process_info->sema_wait); // Unblock parent waiting on this child
+  }
 
-  struct list_elem *e;
-  for (e = list_begin(&cur->parent->children_list); e != list_end(&cur->parent->children_list); e = list_next(e)) {
-      info = list_entry(e, struct process_info, elem);
-      if (info && info->tid && info->tid == cur->tid) {
-          break;
-      }
-      info = NULL;
-  }
-  if (info != NULL) {
-      info->exit_status = cur->exit_status; // Update exit status
-      // Check and handle the current thread's own children
-      for (e = list_begin(&cur->children_list); e != list_end(&cur->children_list); e = list_next(e)) {
-          struct process_info *child_info = list_entry(e, struct process_info, elem);
-          if (child_info != NULL) {
-            process_wait(child_info->tid);
-          }
-      }
-      sema_up(&info->sema_wait); // Unblock parent waiting on this child
-  }
 
   // close file discriptors
   for (int i = 0; i < MAX_FILE_DESCRIPTORS; i++) {

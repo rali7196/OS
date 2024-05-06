@@ -98,6 +98,7 @@ struct thread
     struct thread* parent;               /**< Pointer to Parent thread  */
    //  struct semaphore sema_wait;         /**< Semaphore for waiting for child to exit. */
     struct file* file_descriptors_table[MAX_FILE_DESCRIPTORS];
+    struct process_info *process_info;   /**< pointer to Process info of the thread. */
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /**< List element. */
 
