@@ -24,6 +24,12 @@ static struct lock fs_lock;  // lock for file system operations
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/sc-bad-arg -a sc-bad-arg -- -q  -f run sc-bad-arg
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/sc-boundary-3 -a sc-boundary-3 -- -q  -f run sc-boundary-3
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/create-null -a create-null -- -q  -f run create-null
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/open-null -a open-null -- -q  -f run open-null
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/bad-read -a bad-read -- -q  -f run bad-read 
+//clear && make all && pintos -v -k -T 60 --qemu --filesys-size=2 -p tests/userprog/bad-read -a bad-read -- -q  -f run bad-read < /dev/null
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/exec-once -a exec-once -p tests/userprog/child-simple -a child-simple -- -q  -f run exec-once
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/wait-simple -a wait-simple -p tests/userprog/child-simple -a child-simple -- -q  -f run wait-simple
+//
 
 void
 syscall_init (void) 
@@ -69,19 +75,26 @@ syscall_handler (struct intr_frame *f)
     thread_current()->exit_status = status;
     thread_exit();
   }
+
   else if (syscall_num == SYS_EXEC){  // "pass arguments?"
     char* file_name = *((char**)f->esp + 1);
     if (!validate_user_pointer(file_name)){
       // printf("Invalid file name in SYS_EXEC\n"); // debug
-      f->eax = -1;
-      // thread_exit();
+      thread_current()->exit_status = -1;
+      thread_exit();  // Terminate the process if ESP is invalid
     }
     f->eax = process_execute(file_name); // will return -1 if error
   }
+  
   else if (syscall_num == SYS_WAIT){
+    if (!validate_user_pointer(f->esp+1)) {
+      thread_current()->exit_status = -1;
+      thread_exit();  // Terminate the process if ESP is invalid
+    }
     tid_t pid = *((tid_t*)f->esp + 1);
-    f->eax = process_wait(pid); // process_wait should handle invalid pid
+    f->eax = process_wait(pid); // process_wait should handle other invalid pid
   }
+
   else if (syscall_num == SYS_CREATE){  // create a new file with the given name and size
 
     //validate first argument
@@ -116,6 +129,11 @@ syscall_handler (struct intr_frame *f)
   }
   else if (syscall_num == SYS_OPEN){
     char* file_name = *((char**)f->esp + 1);
+    if (!validate_user_pointer(file_name)) {
+    // printf("Invalid ESP in syscall_handler\n"); // debug
+      thread_current()->exit_status = -1;
+      thread_exit();  // Terminate the process if ESP is invalid
+    }
     lock_acquire(&fs_lock);
     struct file* file = filesys_open(file_name);
     if (!file){
@@ -144,9 +162,25 @@ syscall_handler (struct intr_frame *f)
   }
   else if (syscall_num == SYS_READ){  
     lock_acquire(&fs_lock);
+    if (!validate_user_pointer(f->esp+1)) {
+    // printf("Invalid ESP in syscall_handler\n"); // debug
+      lock_release(&fs_lock);
+      thread_current()->exit_status = -1;
+      thread_exit();  // Terminate the process if ESP is invalid
+      
+    }
     int fd = *((int*)f->esp + 1);
+
     void* buffer = *((void**)f->esp + 2);
+    if (!validate_user_pointer(f->esp + 3)) {
+    // printf("Invalid ESP in syscall_handler\n"); // debug
+      lock_release(&fs_lock);
+      thread_current()->exit_status = -1;
+      thread_exit();  // Terminate the process if ESP is invalid
+    }    
     unsigned size = *((unsigned*)f->esp + 3);
+
+
     if (!validate_user_pointer(buffer) || !validate_user_pointer(buffer + size - 1)){ // check buffer validity
       // printf("Invalid buffer in SYS_READ\n"); // debug
       f->eax = -1;
@@ -259,3 +293,4 @@ validate_file_descriptor(int fd){
   }
   return true;
 }
+

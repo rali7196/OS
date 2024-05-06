@@ -140,6 +140,9 @@ page_fault (struct intr_frame *f)
      be assured of reading CR2 before it changed). */
   intr_enable ();
 
+  struct thread *cur = thread_current();
+  cur->exit_status = -1;
+
   /* Count page faults. */
   page_fault_cnt++;
 

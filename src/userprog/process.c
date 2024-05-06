@@ -61,7 +61,7 @@ process_execute (const char *file_name)
     struct process_info *child_info = malloc(sizeof(struct process_info));
     if (child_info) {
       child_info->tid = tid;
-      // sema_init(&child_info->sema_wait, 0);
+      sema_init(&child_info->sema_wait, 0);
       list_push_back(&thread_current()->children_list, &child_info->elem);
     }
 
@@ -117,34 +117,28 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid)   // todo: check if already called
 { 
-  struct thread *child = get_thread_by_tid(child_tid);
-  int status = -1;
+    struct list_elem *e;
+    struct process_info *child_info = NULL;
 
-  if (!child || child->parent != thread_current()) { 
-    return status; // TID is invalid or not a child of the calling process.
-  }
+    // find the child info from parent's children list
+    for (e = list_begin(&thread_current()->children_list); e != list_end(&thread_current()->children_list); e = list_next(e)) {
+        struct process_info *info = list_entry(e, struct process_info, elem);
+        if (info->tid == child_tid) {
+            child_info = info;
+            break;
+        }
+    }
+    if (!child_info) {
+        return -1;
+    }
 
-  sema_down(&child->sema_wait); // sema initially 0, so this will block until the child calls thread_exits
+    sema_down(&child_info->sema_wait);
+    int status = child_info->exit_status;
 
-  // get the exit status of the child from the process_info struct
-  struct list_elem *e;
-  struct process_info *child_info = NULL;
-  for (e = list_begin(&thread_current()->children_list);
-      e != list_end(&thread_current()->children_list); e = list_next(e)) {
-      struct process_info *info = list_entry(e, struct process_info, elem);
-      if (info->tid == child_tid) {
-          child_info = info;
-          break;
-      }
-  }
-  if (child_info) {
-    status = child_info->exit_status;
     list_remove(&child_info->elem);
-    free(child_info); // Cleanup
-  } 
-
-  printf("%s: exit(%d)\n", parsed_argv[parsed_argc-1], status);
-  return status;
+    free(child_info);
+    printf("%s: exit(%d)\n", parsed_argv[parsed_argc-1], status);
+    return status;
 }
  
 
@@ -160,13 +154,14 @@ process_exit (void)
   struct list_elem *e;
   for (e = list_begin(&cur->parent->children_list); e != list_end(&cur->parent->children_list); e = list_next(e)) {
       info = list_entry(e, struct process_info, elem);
-      if (info->tid == cur->tid) {
+      if (info && info->tid && info->tid == cur->tid) {
           break;
       }
       info = NULL;
   }
   if (info != NULL) {
       info->exit_status = cur->exit_status; // Update exit status
+      sema_up(&info->sema_wait); // Unblock parent waiting on this child
   }
 
   // close file discriptors

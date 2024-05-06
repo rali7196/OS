@@ -96,7 +96,7 @@ struct thread
     int exit_status;                    /**< Exit status of the thread. */
     struct list children_list;           /**< List of children's tid of the thread. */
     struct thread* parent;               /**< Pointer to Parent thread  */
-    struct semaphore sema_wait;         /**< Semaphore for waiting for child to exit. */
+   //  struct semaphore sema_wait;         /**< Semaphore for waiting for child to exit. */
     struct file* file_descriptors_table[MAX_FILE_DESCRIPTORS];
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /**< List element. */
@@ -113,7 +113,7 @@ struct thread
 struct process_info {
     tid_t tid;                 /**< The TID of the thread. */
     int exit_status;           /**< Exit status of the process. */
-   //  struct semaphore sema_wait;/**< Semaphore to signal parent upon child exit. */
+    struct semaphore sema_wait;/**< Semaphore to signal parent upon child exit. */
     struct list_elem elem;     /**< List element to store in parent's child list. */
 };
 
