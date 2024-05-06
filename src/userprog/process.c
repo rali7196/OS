@@ -186,6 +186,7 @@ process_exit (void)
   struct thread *cur = thread_current ();
   uint32_t *pd;
 
+
   struct process_info *info = NULL;
 
   struct list_elem *e;
@@ -198,6 +199,13 @@ process_exit (void)
   }
   if (info != NULL) {
       info->exit_status = cur->exit_status; // Update exit status
+      // Check and handle the current thread's own children
+      for (e = list_begin(&cur->children_list); e != list_end(&cur->children_list); e = list_next(e)) {
+          struct process_info *child_info = list_entry(e, struct process_info, elem);
+          if (child_info != NULL) {
+            process_wait(child_info->tid);
+          }
+      }
       sema_up(&info->sema_wait); // Unblock parent waiting on this child
   }
 
