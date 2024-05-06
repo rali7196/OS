@@ -87,8 +87,12 @@ syscall_handler (struct intr_frame *f)
   }
   
   else if (syscall_num == SYS_WAIT){
+    if (!validate_user_pointer(f->esp+1)) {
+      thread_current()->exit_status = -1;
+      thread_exit();  // Terminate the process if ESP is invalid
+    }
     tid_t pid = *((tid_t*)f->esp + 1);
-    f->eax = process_wait(pid); // process_wait should handle invalid pid
+    f->eax = process_wait(pid); // process_wait should handle other invalid pid
   }
 
   else if (syscall_num == SYS_CREATE){  // create a new file with the given name and size
