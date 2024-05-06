@@ -174,7 +174,7 @@ process_wait (tid_t child_tid)   // todo: check if already called
 
     list_remove(&child_info->elem);
     free(child_info);
-    printf("%s: exit(%d)\n", parsed_argv[parsed_argc-1], status);
+    printf("%s: exit(%d)\n", process_name, status);
     return status;
 }
  
