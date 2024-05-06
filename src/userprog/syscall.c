@@ -91,13 +91,14 @@ syscall_handler (struct intr_frame *f)
     }
     // Check if the file exists
     struct file *file = filesys_open(file_name);
-    if (!file) { // File not found, handle the error
-      f->eax = -1;
-      thread_current()->exit_status = -1;
-      thread_exit();
-    } else {
-      file_close(file);
-    }
+    // if (!file) { // File not found, handle the error
+    //   f->eax = -1;
+    //   thread_current()->exit_status = -1;
+    //   thread_exit();
+    // }
+    // } else {
+    //   file_close(file);
+    // }
     tid_t pid = process_execute(file_name); // will return -1 if error
     if (pid == TID_ERROR || pid == -1) {
       // printf("Error in process_execute\n");

@@ -24,6 +24,8 @@
 
 
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/exec-arg -a exec-arg -p tests/userprog/child-args -a child-args -- -q  -f run exec-arg
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/exec-once -a exec-once -p tests/userprog/child-simple -a child-simple -- -q  -f run exec-once
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/args-none -a args-none -- -q  -f run args-none
 
 
 char** parsed_argv;
@@ -52,7 +54,58 @@ process_execute (const char *file_name)
   strlcpy (fn_copy, file_name, PGSIZE);
 
   /* Create a new thread to execute FILE_NAME. */
+  char* token, *save_ptr;
+
+  char** parsed_argv = malloc(128 * sizeof(char*));
+  
+
+    char *fn_copy2;
+
+    /* Make a copy of FILE_NAME.
+      Otherwise there's a race between the caller and load(). */
+    fn_copy2 = palloc_get_page (0);
+    if (fn_copy2 == NULL)
+      return TID_ERROR;
+    strlcpy (fn_copy2, file_name, PGSIZE);
+
+
+  int parsed_argv_counter = 0;
+  for (token = strtok_r (fn_copy2, " ", &save_ptr); token != NULL;
+      token = strtok_r (NULL, " ", &save_ptr)){
+        parsed_argv[parsed_argv_counter] = token;
+        // printf("%s\n", token);
+        parsed_argv_counter += 1;
+      }
+
+  char **parsed_argv_2 = malloc(128 * sizeof(char*));
+  int argv_counter = 0;
+  // for(int i = parsed_argv_counter-1; i >= 0; i--){
+  //   parsed_argv_2[i] = parsed_argv[argv_counter];
+  //   argv_counter++;
+  // }
+  // for(int i = 0; i < parsed_argv_counter; i++){
+  //   parsed_argv[i] = parsed_argv_2[i];
+  // }
+  parsed_argc=parsed_argv_counter;
+
+  parsed_argv[parsed_argv_counter] = 0x0;  
+
+ 
+  
+  
+  
+  
+  
   tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
+  struct thread *curr = thread_current();
+  curr->name2 = malloc(128);
+  strlcpy(curr->name2, parsed_argv[0], strlen(parsed_argv[0])+1);
+
+
+  free(parsed_argv);
+  free(parsed_argv_2);
+
+
   if (tid == TID_ERROR) {
     palloc_free_page (fn_copy); 
     return TID_ERROR;
@@ -60,6 +113,7 @@ process_execute (const char *file_name)
     struct thread *child = get_thread_by_tid(tid);
     if (child) {
         child->parent = thread_current(); // Set the parent pointer
+
         list_push_back(&thread_current()->children_list, &child->allelem);
     }
     // add child thread to parent's children list
@@ -71,6 +125,7 @@ process_execute (const char *file_name)
       sema_init(&child_info->sema_wait, 0);
       list_push_back(&thread_current()->children_list, &child_info->elem);
     }
+
 
   }
   return tid;
@@ -176,7 +231,7 @@ process_wait (tid_t child_tid)   // todo: check if already called
 
     list_remove(&child_info->elem);
     free(child_info);
-    printf("%s: exit(%d)\n", process_name, status);
+    printf("%s: exit(%d)\n", thread_current()->name2, status);
     return status;
 }
  
@@ -207,6 +262,7 @@ process_exit (void)
 
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
+  free(cur->name2);
   pd = cur->pagedir;
   if (pd != NULL) 
     {

@@ -101,6 +101,7 @@ struct thread
     struct process_info *process_info;   /**< pointer to Process info of the thread. */
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /**< List element. */
+    char *name2;
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
