@@ -89,11 +89,10 @@ syscall_handler (struct intr_frame *f)
     }
     tid_t pid = process_execute(file_name); // will return -1 if error
     if (pid == TID_ERROR || pid == -1) {
-      printf("Error in process_execute\n");
+      // printf("Error in process_execute\n");
       thread_current()->exit_status = -1;
       thread_exit();
     }
-    printf("pid: %d\n", pid);
     f->eax = pid;
   }
   

@@ -312,16 +312,16 @@ thread_exit (void)
   // sema_up(&cur->sema_wait); // signal process_wait() that this thread is done
 
   // signal process_wait() that this thread is done, update sema_wait in process_info
-  struct list_elem *e;
-  struct thread *t;
-  for (e = list_begin (&cur->parent->children_list); e != list_end (&cur->parent->children_list); e = list_next (e)) {
-    t = list_entry (e, struct thread, elem);
-    if(t && t->tid && t->tid == cur->tid){
-      struct process_info *info = list_entry(e, struct process_info, elem);
-      sema_up(&info->sema_wait);
-      break;
-    }
-  }
+  // struct list_elem *e;
+  // struct thread *t;
+  // for (e = list_begin (&cur->parent->children_list); e != list_end (&cur->parent->children_list); e = list_next (e)) {
+  //   t = list_entry (e, struct thread, elem);
+  //   if(t && t->tid && t->tid == cur->tid){
+  //     struct process_info *info = list_entry(e, struct process_info, elem);
+  //     sema_up(&info->sema_wait);
+  //     break;
+  //   }
+  // }
   
   schedule ();
   NOT_REACHED ();
