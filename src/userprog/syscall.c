@@ -78,14 +78,25 @@ syscall_handler (struct intr_frame *f)
 
   else if (syscall_num == SYS_EXEC){  // "pass arguments?"
     if (!validate_user_pointer((char **)f->esp + 1)) {
+        f->eax = -1;
         thread_current()->exit_status = -1;
         thread_exit();
     }
     char* file_name = *((char**)f->esp + 1);
     // Validate the file_name pointer
     if (file_name == NULL || !validate_user_pointer(file_name) || strlen(file_name) == 0) {
+        f->eax = -1;
         thread_current()->exit_status = -1;
         thread_exit();
+    }
+    // Check if the file exists
+    struct file *file = filesys_open(file_name);
+    if (!file) { // File not found, handle the error
+      f->eax = -1;
+      thread_current()->exit_status = -1;
+      thread_exit();
+    } else {
+      file_close(file);
     }
     tid_t pid = process_execute(file_name); // will return -1 if error
     if (pid == TID_ERROR || pid == -1) {
