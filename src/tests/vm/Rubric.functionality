@@ -11,5 +11,4 @@ Functionality of virtual memory subsystem:
 3	page-shuffle
 4	page-merge-seq
 4	page-merge-par
-4	page-merge-mm
 4	page-merge-stk
