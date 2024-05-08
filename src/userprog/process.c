@@ -59,6 +59,9 @@ process_execute (const char *file_name)
   strlcpy (fn_copy, file_name, PGSIZE);
 
   struct exec_args *local_args = malloc(sizeof(struct exec_args));
+  local_args->parsed_argv = palloc_get_page (0);
+  if (local_args->parsed_argv == NULL)
+    return TID_ERROR;
 
   /* Create a new thread to execute FILE_NAME. */
   char* token, *save_ptr;
@@ -67,6 +70,8 @@ process_execute (const char *file_name)
   
     /* Make a copy of FILE_NAME.
       Otherwise there's a race between the caller and load(). */
+
+  char** parsed_argv_2 = malloc(sizeof(char*) * MAX_ARGS);
   int parsed_argv_counter = 0;
   for (token = strtok_r (fn_copy, " ", &save_ptr); token != NULL;
       token = strtok_r (NULL, " ", &save_ptr)){
@@ -74,13 +79,17 @@ process_execute (const char *file_name)
         // printf("%s\n", token);
         parsed_argv_counter += 1;
       }
-  // for(int i = parsed_argv_counter-1; i >= 0; i--){
-  //   parsed_argv_2[i] = parsed_argv[argv_counter];
-  //   argv_counter++;
-  // }
-  // for(int i = 0; i < parsed_argv_counter; i++){
-  //   parsed_argv[i] = parsed_argv_2[i];
-  // }
+
+
+  int idx_pos = 0;
+  for(int i = parsed_argv_counter-1; i >= 0; i--){
+    parsed_argv_2[idx_pos] = local_args->parsed_argv[i];
+    idx_pos++;
+  }
+  for(int i = 0; i < parsed_argv_counter; i++){
+    local_args->parsed_argv[i] = parsed_argv_2[i];
+  }
+
   local_args->parsed_argc=parsed_argv_counter;
 
   local_args->parsed_argv[parsed_argv_counter] = 0x0;  
@@ -88,10 +97,11 @@ process_execute (const char *file_name)
   tid = thread_create (file_name, PRI_DEFAULT, start_process, (void*)local_args);
   struct thread *curr = thread_current();
   curr->name2 = malloc(128);
-  strlcpy(curr->name2, parsed_argv[0], strlen(parsed_argv[0])+1);
+  strlcpy(curr->name2, local_args->parsed_argv[0], strlen(local_args->parsed_argv[0])+1);
 
 
   free(parsed_argv);
+  free(parsed_argv_2);
 
 
   if (tid == TID_ERROR) {
