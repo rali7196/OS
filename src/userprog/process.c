@@ -19,6 +19,7 @@
 #include "threads/vaddr.h"
 #include "threads/init.h"
 #include "threads/malloc.h"
+#include "userprog/syscall.h"
 
 #define MAX_ARGS 128
 
@@ -141,15 +142,10 @@ start_process (void *exec_args)
   success = load (args, &if_.eip, &if_.esp);
   if (!success) {
     // free(args->parsed_argv);
-    palloc_free_page(args->parsed_argv);
+    palloc_free_page (args->parsed_argv); 
     free(args);
     thread_exit();
   }
-
-  /* Push arguments onto the stack */
-
-
-
 
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
@@ -357,6 +353,8 @@ load (struct exec_args* local_args, void (**eip) (void), void **esp)
   process_activate ();
 
   /* Open executable file. */
+  lock_acquire(&fs_lock);
+  // printf("file_name: %s\n", file_name);
   file = filesys_open (file_name);
   if (file == NULL) 
     {
@@ -441,13 +439,6 @@ load (struct exec_args* local_args, void (**eip) (void), void **esp)
   if (!setup_stack (esp, local_args))
     goto done;
 
-  //do argparsing here
-
-
-
-
-
-
 
   /* Start address. */
   *eip = (void (*) (void)) ehdr.e_entry;
@@ -457,6 +448,7 @@ load (struct exec_args* local_args, void (**eip) (void), void **esp)
  done:
   /* We arrive here whether the load is successful or not. */
   file_close (file);
+  lock_release(&fs_lock);
   return success;
 }
 

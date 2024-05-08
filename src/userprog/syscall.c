@@ -18,7 +18,7 @@
 static void syscall_handler (struct intr_frame *);
 static bool validate_user_pointer (const void *ptr);  // implemented for project 2
 static bool validate_file_descriptor(int fd);
-static struct lock fs_lock;  // lock for file system operations
+// static struct lock fs_lock;  // lock for file system operations
 
 
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/sc-bad-sp -a sc-bad-sp -- -q  -f run sc-bad-sp
