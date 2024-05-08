@@ -26,7 +26,8 @@ main (int argc, const char *argv[])
   
   CHECK (argc == 2, "argc must be 2, actually %d", argc);
   child_idx = atoi (argv[1]);
-
+  // printf("child got arg[0]: %s\n", argv[0]);
+  // printf("child got arg[1]: %s\n", argv[1]);
   random_init (0);
   random_bytes (buf, sizeof buf);
 
