@@ -12,6 +12,8 @@
 #include "devices/shutdown.h"
 #include "threads/synch.h"
 #include <string.h>
+#include "threads/malloc.h"
+
 
 static void syscall_handler (struct intr_frame *);
 static bool validate_user_pointer (const void *ptr);  // implemented for project 2
@@ -32,6 +34,8 @@ static struct lock fs_lock;  // lock for file system operations
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/args-multiple -a args-multiple -- -q  -f run 'args-multiple some arguments for you!'
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/exec-arg -a exec-arg -p tests/userprog/child-args -a child-args -- -q  -f run exec-arg
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/filesys/base/syn-remove -a syn-remove -- -q  -f run syn-remove
+
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/exec-missing -a exec-missing -- -q  -f run exec-missing
 
 
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/exec-bound-2 -a exec-bound-2 -- -q  -f run exec-bound-2
@@ -112,7 +116,6 @@ syscall_handler (struct intr_frame *f)
       if (!validate_user_pointer(curr_ptr)) {
         f->eax = -1;
         lock_release(&fs_lock);
-
         thread_current()->exit_status = -1;
         thread_exit();
       }
@@ -147,16 +150,35 @@ syscall_handler (struct intr_frame *f)
 
     // file_close(file_status);
 
-    tid_t pid = process_execute(file_name); // will return -1 if error
+    struct exec_args *local_args = malloc(sizeof(struct exec_args));
+    local_args->missing_file_status = 0;
+
+    struct file* file_status = filesys_open(local_args->parsed_argv[local_args->parsed_argc-1]);
+    if(!file_status){
+      f->eax = -1;
+      file_close(file_status);
+      lock_release(&fs_lock);
+      return;
+    }
+    file_close(file_status);
+    tid_t pid = process_execute(file_name, local_args); // will return -1 if error
+
+
+    // if(local_args->missing_file_status){
+    //   f->eax = -1;
+    //   lock_release(&fs_lock);
+    //   return;
+    // }
     if (pid == TID_ERROR || pid == -1) {
       // printf("Error in process_execute\n");
       f->eax = -1;
       lock_release(&fs_lock);
-
+      
       thread_current()->exit_status = -1;
       thread_exit();
     }
     f->eax = pid;
+    // free(local_args);
     lock_release(&fs_lock);
 
   }

@@ -29,10 +29,7 @@
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/args-multiple -a args-multiple -- -q  -f run 'args-multiple some arguments for you!'
 
 //
-struct exec_args {
-  char** parsed_argv;
-  int parsed_argc;
-};
+
 
 // char** parsed_argv;
 // int parsed_argc;
@@ -46,7 +43,7 @@ static bool load (struct exec_args *local_args, void (**eip) (void), void **esp)
    before process_execute() returns.  Returns the new process's
    thread id, or TID_ERROR if the thread cannot be created. */
 tid_t
-process_execute (const char *file_name) 
+process_execute (const char *file_name, struct exec_args* local_args) 
 {
   char *fn_copy;
   tid_t tid;
@@ -58,7 +55,6 @@ process_execute (const char *file_name)
     return TID_ERROR;
   strlcpy (fn_copy, file_name, PGSIZE);
 
-  struct exec_args *local_args = malloc(sizeof(struct exec_args));
   local_args->parsed_argv = palloc_get_page (0);
   if (local_args->parsed_argv == NULL)
     return TID_ERROR;
@@ -106,6 +102,7 @@ process_execute (const char *file_name)
 
   if (tid == TID_ERROR) {
     palloc_free_page (fn_copy); 
+    palloc_free_page (local_args->parsed_argv);
     return TID_ERROR;
   } else {
     struct thread *child = get_thread_by_tid(tid);
@@ -143,7 +140,8 @@ start_process (void *exec_args)
 
   success = load (args, &if_.eip, &if_.esp);
   if (!success) {
-    free(args->parsed_argv);
+    // free(args->parsed_argv);
+    palloc_free_page(args->parsed_argv);
     free(args);
     thread_exit();
   }
@@ -363,6 +361,7 @@ load (struct exec_args* local_args, void (**eip) (void), void **esp)
   if (file == NULL) 
     {
       printf ("load: %s: open failed\n", file_name);
+      local_args->missing_file_status = 1;
       goto done; 
     }
 

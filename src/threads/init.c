@@ -362,11 +362,12 @@ run_task (char **argv)
 
 
   
+  struct exec_args *local_args = malloc(sizeof(struct exec_args));
 
   
   printf ("Executing '%s':\n", task);
 #ifdef USERPROG
-  process_wait (process_execute (task));
+  process_wait (process_execute (task, local_args));
 #else
   run_test (task);
 #endif
