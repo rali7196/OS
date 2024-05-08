@@ -97,7 +97,7 @@ process_execute (const char *file_name)
   tid = thread_create (file_name, PRI_DEFAULT, start_process, (void*)local_args);
   struct thread *curr = thread_current();
   curr->name2 = malloc(128);
-  strlcpy(curr->name2, local_args->parsed_argv[0], strlen(local_args->parsed_argv[0])+1);
+  strlcpy(curr->name2, local_args->parsed_argv[local_args->parsed_argc-1], strlen(local_args->parsed_argv[local_args->parsed_argc-1])+1);
 
 
   free(parsed_argv);
@@ -350,7 +350,7 @@ load (struct exec_args* local_args, void (**eip) (void), void **esp)
   off_t file_ofs;
   bool success = false;
   int i;
-  const char *file_name = local_args->parsed_argv[0];
+  const char *file_name = local_args->parsed_argv[local_args->parsed_argc-1];
 
   /* Allocate and activate page directory. */
   t->pagedir = pagedir_create ();
