@@ -252,7 +252,7 @@ process_exit (void)
       sema_up(&cur->process_info->sema_wait); // Unblock parent waiting on this child
   }
 
-
+////
   // close file discriptors
   for (int i = 0; i < MAX_FILE_DESCRIPTORS; i++) {
       if (cur->file_descriptors_table[i] != NULL) {

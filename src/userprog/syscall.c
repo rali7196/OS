@@ -32,6 +32,9 @@ static struct lock fs_lock;  // lock for file system operations
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/args-multiple -a args-multiple -- -q  -f run 'args-multiple some arguments for you!'
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/exec-arg -a exec-arg -p tests/userprog/child-args -a child-args -- -q  -f run exec-arg
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/filesys/base/syn-remove -a syn-remove -- -q  -f run syn-remove
+
+
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/exec-bound-2 -a exec-bound-2 -- -q  -f run exec-bound-2
 void
 syscall_init (void) 
 {
@@ -76,28 +79,86 @@ syscall_handler (struct intr_frame *f)
   }
 
   else if (syscall_num == SYS_EXEC){  // "pass arguments?"
+
+    lock_acquire(&fs_lock);
+
+
+    //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/exec-bound-3 -a exec-bound-3 -- -q  -f run exec-bound-3
+
+
     if (!validate_user_pointer((char **)f->esp + 1)) {
         f->eax = -1;
+        lock_release(&fs_lock);
+
         thread_current()->exit_status = -1;
         thread_exit();
     }
+
+    if (!validate_user_pointer((char **)f->esp + 2)) {
+        f->eax = -1;
+        lock_release(&fs_lock);
+
+        thread_current()->exit_status = -1;
+        thread_exit();
+    }
+
     char* file_name = *((char**)f->esp + 1);
+
+    char curr = 'a';
+
+    for(int i = 0; curr != '\0'; i++){
+
+      void *curr_ptr = (void*)(file_name)+i;
+      if (!validate_user_pointer(curr_ptr)) {
+        f->eax = -1;
+        lock_release(&fs_lock);
+
+        thread_current()->exit_status = -1;
+        thread_exit();
+      }
+
+      curr = *(char*)curr_ptr;
+    }
+    
+
+
+
     // Validate the file_name pointer
     if (file_name == NULL || !validate_user_pointer(file_name) || strlen(file_name) == 0) {
         f->eax = -1;
+        lock_release(&fs_lock);
         thread_current()->exit_status = -1;
         thread_exit(); 
     }
     // to-do: Check if the file exists 
 
+    // struct file* file_status = filesys_open(file_name);
+    // printf("opening file: %s\n", file_name);
+
+    // if(!file_status){
+    //   lock_release(&fs_lock);
+
+    //   f->eax = -1;
+    //   // thread_current()->exit_status = -1;
+    //   // thread_exit();
+    //   printf("Terminating thread due to bad file name\n");
+    //   return;
+    // }
+
+    // file_close(file_status);
+
     tid_t pid = process_execute(file_name); // will return -1 if error
     if (pid == TID_ERROR || pid == -1) {
       // printf("Error in process_execute\n");
       f->eax = -1;
+      lock_release(&fs_lock);
+
       thread_current()->exit_status = -1;
       thread_exit();
     }
     f->eax = pid;
+    lock_release(&fs_lock);
+
   }
   
   else if (syscall_num == SYS_WAIT){
