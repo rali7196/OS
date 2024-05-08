@@ -135,9 +135,9 @@ process_execute (const char *file_name)
 /** A thread function that loads a user process and starts it
    running. */
 static void
-start_process (void *file_name_)
+start_process (void *exec_args)
 {
-  char *file_name = file_name_;
+  struct exec_args *args = exec_args;
   struct intr_frame if_;
   bool success;
 
@@ -145,43 +145,19 @@ start_process (void *file_name_)
   memset (&if_, 0, sizeof if_);
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
-  if_.eflags = FLAG_IF | FLAG_MBS;
-  //put argparsing here, add another argument to setup stack and load to take in string arguments
+  if_.eflags = FLAG_IF | FLAG_MBS;  
 
-
-
-  char* token, *save_ptr;
-
-  parsed_argv = malloc(128 * sizeof(char*));
-  
-  int parsed_argv_counter = 0;
-  for (token = strtok_r (file_name, " ", &save_ptr); token != NULL;
-      token = strtok_r (NULL, " ", &save_ptr)){
-        parsed_argv[parsed_argv_counter] = token;
-        // printf("%s\n", token);
-        parsed_argv_counter += 1;
-      }
-
-  char **parsed_argv_2 = malloc(128 * sizeof(char*));
-  int argv_counter = 0;
-  for(int i = parsed_argv_counter-1; i >= 0; i--){
-    parsed_argv_2[i] = parsed_argv[argv_counter];
-    argv_counter++;
+  success = load (args->parsed_argv[0], &if_.eip, &if_.esp);
+  if (!success) {
+    free(args->parsed_argv);
+    free(args);
+    thread_exit();
   }
-  for(int i = 0; i < parsed_argv_counter; i++){
-    parsed_argv[i] = parsed_argv_2[i];
-  }
-  parsed_argc=parsed_argv_counter;
 
-  parsed_argv[parsed_argv_counter] = 0x0;
-  
+  /* Push arguments onto the stack */
 
-  success = load (file_name, &if_.eip, &if_.esp);
 
-  /* If load failed, quit. */
-  palloc_free_page (file_name);
-  if (!success) 
-    thread_exit ();
+
 
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
