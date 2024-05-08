@@ -101,6 +101,9 @@ process_execute (const char *file_name, struct exec_args* local_args)
   free(parsed_argv_2);
 
 
+  // struct file* file_status = filesys_open(local_args->parsed_argv[parsed]);
+
+
   if (tid == TID_ERROR) {
     palloc_free_page (fn_copy); 
     palloc_free_page (local_args->parsed_argv);

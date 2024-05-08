@@ -153,22 +153,23 @@ syscall_handler (struct intr_frame *f)
     struct exec_args *local_args = malloc(sizeof(struct exec_args));
     local_args->missing_file_status = 0;
 
+
+    tid_t pid = process_execute(file_name, local_args); // will return -1 if error
     struct file* file_status = filesys_open(local_args->parsed_argv[local_args->parsed_argc-1]);
     if(!file_status){
       f->eax = -1;
       file_close(file_status);
-      lock_release(&fs_lock);
+      lock_release(&fs_lock);//
       return;
     }
     file_close(file_status);
-    tid_t pid = process_execute(file_name, local_args); // will return -1 if error
 
 
-    // if(local_args->missing_file_status){
-    //   f->eax = -1;
-    //   lock_release(&fs_lock);
-    //   return;
-    // }
+    if(local_args->missing_file_status){
+      f->eax = -1;
+      lock_release(&fs_lock);
+      return;
+    }
     if (pid == TID_ERROR || pid == -1) {
       // printf("Error in process_execute\n");
       f->eax = -1;
