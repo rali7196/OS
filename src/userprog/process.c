@@ -26,10 +26,11 @@
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/exec-arg -a exec-arg -p tests/userprog/child-args -a child-args -- -q  -f run exec-arg
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/exec-once -a exec-once -p tests/userprog/child-simple -a child-simple -- -q  -f run exec-once
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/args-none -a args-none -- -q  -f run args-none
+//clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/args-multiple -a args-multiple -- -q  -f run 'args-multiple some arguments for you!'
 
 //
 struct exec_args {
-  char* parsed_argv;
+  char** parsed_argv;
   int parsed_argc;
 };
 
@@ -57,32 +58,22 @@ process_execute (const char *file_name)
     return TID_ERROR;
   strlcpy (fn_copy, file_name, PGSIZE);
 
+  struct exec_args *local_args = malloc(sizeof(struct exec_args));
+
   /* Create a new thread to execute FILE_NAME. */
   char* token, *save_ptr;
 
   char** parsed_argv = malloc(128 * sizeof(char*));
   
-
-    char *fn_copy2;
-
     /* Make a copy of FILE_NAME.
       Otherwise there's a race between the caller and load(). */
-    fn_copy2 = palloc_get_page (0);
-    if (fn_copy2 == NULL)
-      return TID_ERROR;
-    strlcpy (fn_copy2, file_name, PGSIZE);
-
-
   int parsed_argv_counter = 0;
-  for (token = strtok_r (fn_copy2, " ", &save_ptr); token != NULL;
+  for (token = strtok_r (fn_copy, " ", &save_ptr); token != NULL;
       token = strtok_r (NULL, " ", &save_ptr)){
-        parsed_argv[parsed_argv_counter] = token;
+        local_args->parsed_argv[parsed_argv_counter] = token;
         // printf("%s\n", token);
         parsed_argv_counter += 1;
       }
-
-  char **parsed_argv_2 = malloc(128 * sizeof(char*));
-  int argv_counter = 0;
   // for(int i = parsed_argv_counter-1; i >= 0; i--){
   //   parsed_argv_2[i] = parsed_argv[argv_counter];
   //   argv_counter++;
@@ -90,16 +81,10 @@ process_execute (const char *file_name)
   // for(int i = 0; i < parsed_argv_counter; i++){
   //   parsed_argv[i] = parsed_argv_2[i];
   // }
-  parsed_argc=parsed_argv_counter;
+  local_args->parsed_argc=parsed_argv_counter;
 
-  parsed_argv[parsed_argv_counter] = 0x0;  
+  local_args->parsed_argv[parsed_argv_counter] = 0x0;  
 
- 
-  
-  
-  
-  
-  
   tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
   struct thread *curr = thread_current();
   curr->name2 = malloc(128);
@@ -107,7 +92,6 @@ process_execute (const char *file_name)
 
 
   free(parsed_argv);
-  free(parsed_argv_2);
 
 
   if (tid == TID_ERROR) {
