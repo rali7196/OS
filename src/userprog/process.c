@@ -202,6 +202,7 @@ process_wait (tid_t child_tid)   // todo: check if already called
   list_remove(&child_info->elem);
   free(child_info);
   printf("%s: exit(%d)\n", thread_current()->name2, status);
+  // free(thread_current()->name2);
   return status;
 }
  
