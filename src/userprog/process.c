@@ -27,10 +27,14 @@
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/exec-once -a exec-once -p tests/userprog/child-simple -a child-simple -- -q  -f run exec-once
 //clear && make all && pintos -v -k -T 60 --qemu --gdb --filesys-size=2 -p tests/userprog/args-none -a args-none -- -q  -f run args-none
 
+//
+struct exec_args {
+  char* parsed_argv;
+  int parsed_argc;
+};
 
 char** parsed_argv;
 int parsed_argc;
-char process_name[512];
 
 static thread_func start_process NO_RETURN;
 void fake_return(void);
@@ -170,8 +174,6 @@ start_process (void *file_name_)
   parsed_argc=parsed_argv_counter;
 
   parsed_argv[parsed_argv_counter] = 0x0;
-  // thread_current()->process_name_for_termination_message = file_name;
-  strlcpy(process_name, file_name, strlen(file_name)+1);
   
 
   success = load (file_name, &if_.eip, &if_.esp);
