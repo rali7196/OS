@@ -34,12 +34,12 @@ struct exec_args {
   int parsed_argc;
 };
 
-char** parsed_argv;
-int parsed_argc;
+// char** parsed_argv;
+// int parsed_argc;
 
 static thread_func start_process NO_RETURN;
 void fake_return(void);
-static bool load (const char *cmdline, void (**eip) (void), void **esp);
+static bool load (struct exec_args *local_args, void (**eip) (void), void **esp);
 
 /** Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
@@ -59,6 +59,9 @@ process_execute (const char *file_name)
   strlcpy (fn_copy, file_name, PGSIZE);
 
   struct exec_args *local_args = malloc(sizeof(struct exec_args));
+  local_args->parsed_argv = palloc_get_page (0);
+  if (local_args->parsed_argv == NULL)
+    return TID_ERROR;
 
   /* Create a new thread to execute FILE_NAME. */
   char* token, *save_ptr;
@@ -67,6 +70,8 @@ process_execute (const char *file_name)
   
     /* Make a copy of FILE_NAME.
       Otherwise there's a race between the caller and load(). */
+
+  char** parsed_argv_2 = malloc(sizeof(char*) * MAX_ARGS);
   int parsed_argv_counter = 0;
   for (token = strtok_r (fn_copy, " ", &save_ptr); token != NULL;
       token = strtok_r (NULL, " ", &save_ptr)){
@@ -74,24 +79,29 @@ process_execute (const char *file_name)
         // printf("%s\n", token);
         parsed_argv_counter += 1;
       }
-  // for(int i = parsed_argv_counter-1; i >= 0; i--){
-  //   parsed_argv_2[i] = parsed_argv[argv_counter];
-  //   argv_counter++;
-  // }
-  // for(int i = 0; i < parsed_argv_counter; i++){
-  //   parsed_argv[i] = parsed_argv_2[i];
-  // }
+
+
+  int idx_pos = 0;
+  for(int i = parsed_argv_counter-1; i >= 0; i--){
+    parsed_argv_2[idx_pos] = local_args->parsed_argv[i];
+    idx_pos++;
+  }
+  for(int i = 0; i < parsed_argv_counter; i++){
+    local_args->parsed_argv[i] = parsed_argv_2[i];
+  }
+
   local_args->parsed_argc=parsed_argv_counter;
 
   local_args->parsed_argv[parsed_argv_counter] = 0x0;  
 
-  tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
+  tid = thread_create (file_name, PRI_DEFAULT, start_process, (void*)local_args);
   struct thread *curr = thread_current();
   curr->name2 = malloc(128);
-  strlcpy(curr->name2, parsed_argv[0], strlen(parsed_argv[0])+1);
+  strlcpy(curr->name2, local_args->parsed_argv[local_args->parsed_argc-1], strlen(local_args->parsed_argv[local_args->parsed_argc-1])+1);
 
 
   free(parsed_argv);
+  free(parsed_argv_2);
 
 
   if (tid == TID_ERROR) {
@@ -131,7 +141,7 @@ start_process (void *exec_args)
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;  
 
-  success = load (args->parsed_argv[0], &if_.eip, &if_.esp);
+  success = load (args, &if_.eip, &if_.esp);
   if (!success) {
     free(args->parsed_argv);
     free(args);
@@ -316,7 +326,7 @@ struct Elf32_Phdr
 #define PF_W 2          /**< Writable. */
 #define PF_R 4          /**< Readable. */
 
-static bool setup_stack (void **esp);
+static bool setup_stack (void **esp, struct exec_args* local_args);
 static bool validate_segment (const struct Elf32_Phdr *, struct file *);
 static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
                           uint32_t read_bytes, uint32_t zero_bytes,
@@ -327,7 +337,7 @@ static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
    and its initial stack pointer into *ESP.
    Returns true if successful, false otherwise. */
 bool
-load (const char *file_name, void (**eip) (void), void **esp) 
+load (struct exec_args* local_args, void (**eip) (void), void **esp) 
 {
   struct thread *t = thread_current ();
   struct Elf32_Ehdr ehdr;
@@ -335,6 +345,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
   off_t file_ofs;
   bool success = false;
   int i;
+  const char *file_name = local_args->parsed_argv[local_args->parsed_argc-1];
 
   /* Allocate and activate page directory. */
   t->pagedir = pagedir_create ();
@@ -423,7 +434,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
     }
 
   /* Set up stack. */
-  if (!setup_stack (esp))
+  if (!setup_stack (esp, local_args))
     goto done;
 
   //do argparsing here
@@ -560,9 +571,9 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 void fake_return(void){
   return;
 };
-
+//
 static bool
-setup_stack (void **esp) 
+setup_stack (void **esp, struct exec_args* local_args) 
 {
   uint8_t *kpage;
   bool success = false;
@@ -592,6 +603,9 @@ setup_stack (void **esp)
         *esp = PHYS_BASE-4;
 
         //pushes argument themselves onto stack, and stores where they are stored on the stack
+
+        char** parsed_argv = local_args->parsed_argv;
+        int parsed_argc = local_args->parsed_argc;
 
         int esp_argv_addrs_curr_idx = 0;
         char* esp_argv_addrs[parsed_argc];
