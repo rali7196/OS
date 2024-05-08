@@ -138,11 +138,6 @@ start_process (void *exec_args)
     thread_exit();
   }
 
-  /* Push arguments onto the stack */
-
-
-
-
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
      threads/intr-stubs.S).  Because intr_exit takes all of its
