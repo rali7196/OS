@@ -35,6 +35,16 @@
 // char** parsed_argv;
 // int parsed_argc;
 
+//design
+/*
+first, modify page_fault to ensure that user address is valid (use is_user_valid function from syscalls)
+if it is a valid pointer, then allocate a new page and load that data into memory
+    to load a page into memory:
+        in load_segment: allocate a vm_entry struct and initialize the field values, insert it into the spt
+
+
+*/
+
 static thread_func start_process NO_RETURN;
 void fake_return(void);
 static bool load (struct exec_args *local_args, void (**eip) (void), void **esp);
@@ -536,6 +546,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
       size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
       size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
+      //DELETE THIS PORTION
       /* Get a page of memory. */
       uint8_t *kpage = palloc_get_page (PAL_USER);
       if (kpage == NULL)
@@ -555,6 +566,10 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
           palloc_free_page (kpage);
           return false; 
         }
+      //END OF DELETING PORTION
+      //create vm entry using malloc
+      //set vm entry members, offset, size of file to read when virtual page is required, zero byte to pad at the end
+      //add vm_entry to process's supplemental page table
 
       /* Advance. */
       read_bytes -= page_read_bytes;
