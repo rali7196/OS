@@ -31,3 +31,4 @@ test_main (void)
             buf, sizeof buf, 0,
             return_block_size, check_file_size);
 }
+

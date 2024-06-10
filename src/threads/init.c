@@ -86,6 +86,8 @@ static void locate_block_device (enum block_type, const char *name);
 
 int pintos_init (void) NO_RETURN;
 
+
+
 /** Pintos main entry point. */
 int
 pintos_init (void)
@@ -146,6 +148,7 @@ pintos_init (void)
   
   if (*argv != NULL) {
     /* Run actions specified on kernel command line. */
+    
     run_actions (argv);
   } else {
     // TODO: no command line passed to kernel. Run interactively 
