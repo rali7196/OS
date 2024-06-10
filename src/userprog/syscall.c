@@ -216,7 +216,7 @@ syscall_handler (struct intr_frame *f)
       thread_exit();  // Terminate the process if ESP is invalid
     }
     lock_acquire(&fs_lock);
-    f->eax = filesys_create(file_name, initial_size);
+    f->eax = filesys_create(file_name, initial_size, false);
     lock_release(&fs_lock);
   }
   else if (syscall_num == SYS_REMOVE){  // remove the file with the given name

@@ -5,6 +5,7 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/synch.h"
+#include "filesys/directory.h"
 
 /** States in a thread's life cycle. */
 enum thread_status
@@ -102,7 +103,8 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /**< List element. */
     char *name2;
-    //cwd
+
+   struct dir *cwd;                       /*< Current working directory. */
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
