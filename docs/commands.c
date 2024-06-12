@@ -1,1 +1,0 @@
-clear && make all && rm -f tmp.dsk && pintos-mkdisk tmp.dsk --filesys-size=2 && pintos -v -k -T 60 --qemu --gdb --disk=tmp.dsk -p tests/filesys/extended/grow-root-lg -a grow-root-lg -p tests/filesys/extended/tar -a tar -- -q  -f run grow-root-lg
