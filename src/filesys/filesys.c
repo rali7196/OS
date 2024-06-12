@@ -49,13 +49,13 @@ filesys_done (void)
 bool
 filesys_create (const char *name, off_t initial_size, bool is_dir) 
 {
-  printf("filesys_create called: %s, is_dir: %d\n", name, is_dir);
+  // printf("filesys_create called: %s, is_dir: %d\n", name, is_dir);
 
   block_sector_t inode_sector = 0;
   // struct dir *dir = dir_open_root ();
   struct dir *dir = path_to_dir (name);
   char* file_name = path_to_name (name);
-  printf("file_name from path_to_name: %s\n", file_name);
+  // printf("file_name from path_to_name: %s\n", file_name);
   bool success = false;
   if (strcmp(file_name, ".") != 0 && strcmp(file_name, "..") != 0)
     success = (dir != NULL && file_name != NULL

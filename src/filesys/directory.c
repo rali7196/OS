@@ -143,8 +143,8 @@ dir_lookup (const struct dir *dir, const char *name,
 bool
 dir_add (struct dir *dir, const char *name, block_sector_t inode_sector, bool is_dir)
 {
-  printf("dir_add called: %s, inode_sector: %d, is_dir: %d\n", name, inode_sector, is_dir);
-  printf("dir_add called with inode: %d\n", dir->inode);
+  // printf("dir_add called: %s, inode_sector: %d, is_dir: %d\n", name, inode_sector, is_dir);
+  // printf("dir_add called with inode: %d\n", dir->inode);
   struct dir_entry e;
   off_t ofs;
   bool success = false;
@@ -158,7 +158,7 @@ dir_add (struct dir *dir, const char *name, block_sector_t inode_sector, bool is
 
   /* Check that NAME is not in use. */
   if (lookup (dir, name, NULL, NULL)){
-    printf("dir_add failed: %s\n", name);
+    // printf("dir_add failed: %s\n", name);
     goto done;
   }
 
@@ -181,11 +181,11 @@ dir_add (struct dir *dir, const char *name, block_sector_t inode_sector, bool is
   e.is_dir = is_dir;
   strlcpy (e.name, name, sizeof e.name);
   e.inode_sector = inode_sector;
-  printf("inode_write_at called with inode: %d, name: %s, is_dir: %d, inode_sector: %d\n", dir->inode, e.name, e.is_dir, e.inode_sector);
+  // printf("inode_write_at called with inode: %d, name: %s, is_dir: %d, inode_sector: %d\n", dir->inode, e.name, e.is_dir, e.inode_sector);
   success = inode_write_at (dir->inode, &e, sizeof e, ofs) == sizeof e;
-  printf("inode_write_at returned: %d\n", success);
+  // printf("inode_write_at returned: %d\n", success);
  done:
-  printf("dir_add done: %d\n", success);
+  // printf("dir_add done: %d\n", success);
   return success;
 }
 
@@ -244,7 +244,7 @@ dir_remove (struct dir *dir, const char *name)
    NAME.  Returns true if successful, false if the directory
    contains no more entries. */
 bool
-dir_readdir (struct dir *dir, char name[NAME_MAX + 1])
+dir (struct dir *dir, char name[NAME_MAX + 1])
 {
   struct dir_entry e;
 

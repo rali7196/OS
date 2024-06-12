@@ -7,14 +7,14 @@
 #include "filesys/free-map.h"
 #include "threads/malloc.h"
 #include "threads/thread.h"
-#include <stdio.h>#include <stdio.h>
+#include <stdio.h>
 
 
 /** Identifies an inode. */
 #define INODE_MAGIC 0x494e4f44
 #define PTR_SIZE 4
 
-#define DIRECT_SIZE 122
+#define DIRECT_SIZE 120
 #define INDIRECT_SIZE 128
 
 /** On-disk inode.
@@ -226,7 +226,7 @@ inode_init (void)
 bool
 inode_create (block_sector_t sector, off_t length, bool is_dir)
 {
-  printf("inode_create called: sector: %d, length: %d, is_dir: %d\n", sector, length, is_dir);
+  // printf("inode_create called: sector: %d, length: %d, is_dir: %d\n", sector, length, is_dir);
   struct inode_disk *disk_inode = NULL;
   bool success = false;
 
