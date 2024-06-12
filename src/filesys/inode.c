@@ -483,14 +483,14 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
 
 
 
-
+  off_t offset_ = offset;
   bool expanded = false;
 
   off_t size2 = size;
 
-  // if(inode->data.length == 239){
-  //   printf("hello");
-  // }
+  if(inode->data.length == 239){
+    printf("hello");
+  }
   int bytes_expanded = 0;
 //need to create some way to check if I need more space
   while (size > 0) 
@@ -577,7 +577,10 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
   // inde/
   // int length_added = inode->data.length - bytes_written;
   // if(length_added > 0){
-    inode->data.length += bytes_written;
+    off_t inode_left = (inode->data.length) - offset_;
+    if(bytes_written > inode_left ){
+      inode->data.length += bytes_written - inode_left;
+    }
     block_write(fs_device, inode->data.location, &(inode->data));
   // }
 
