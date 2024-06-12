@@ -456,6 +456,7 @@ inode_read_at (struct inode *inode, void *buffer_, off_t size, off_t offset)
   return bytes_read;
 }
 
+
 /** Writes SIZE bytes from BUFFER into INODE, starting at OFFSET.
    Returns the number of bytes actually written, which may be
    less than SIZE if end of file is reached or an error occurs.
@@ -484,14 +485,41 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
 
 
   off_t offset_ = offset;
-  bool expanded = false;
+  // bool expanded = false;
 
-  off_t size2 = size;
+  // off_t size2 = size;
 
-  if(inode->data.length == 239){
-    printf("hello");
-  }
+  // if(inode->data.length == 239){
+  //   printf("hello");
+  // }
   int bytes_expanded = 0;
+
+
+  static char zeros[BLOCK_SECTOR_SIZE];
+  //if past end of file
+  if(offset > inode->data.length){
+    for(unsigned i = 0; i < bytes_to_sectors(offset); i++){
+      // if(i == 135){
+      //   printf("hello");
+      // }
+      allocate_new_sector(&(inode->data), i * BLOCK_SECTOR_SIZE);
+      block_sector_t sector_idx = byte_to_sector(&inode->data, i * BLOCK_SECTOR_SIZE);
+      if(i + 1 == bytes_to_sectors(offset)){
+        // void* indirect = malloc(BLOCK_SECTOR_SIZE);
+        // block_read(fs_device, sector_idx, indirect);
+        // printf("almost there");
+        inode->data.length += (offset - (i*512));
+        // free(indirect);
+      } else {
+        inode->data.length += 512;  
+      }
+      block_write(fs_device, sector_idx, zeros);
+
+      block_write(fs_device, inode->data.location, &(inode->data));      
+    }
+  }
+
+
 //need to create some way to check if I need more space
   while (size > 0) 
     {
@@ -502,11 +530,14 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
       /* Bytes left in inode, bytes left in sector, lesser of the two. */
       //cant write more bytes than are left in sector
 
-      //we can probably delete this because we are extending a file
-      off_t inode_left = inode_length (inode) - offset;
+      // off_t inode_left = inode_length (inode) - offset;
       int sector_left = BLOCK_SECTOR_SIZE - sector_ofs;
       //if inode left is less than sector left, we can expand the the inode
       // int min_left = inode_left < sector_left ? inode_left : sector_left;
+      
+
+   
+
       int min_left = sector_left;
       int chunk_size = size < min_left ? size : min_left;
 
@@ -515,6 +546,8 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
       // }
     if(size > (inode_length(inode) - offset)){
       // for(unsigned i = 0; i < bytes_to_sectors(size); i++){
+
+      //if the pos is past end of file, need to set offset to position and zero out everything before it
         allocate_new_sector(&(inode->data), offset);
         bytes_expanded += 512;
         bytes_expanded -= sector_left;
@@ -574,15 +607,11 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
       bytes_written += chunk_size;
     }
   free (bounce);
-  // inde/
-  // int length_added = inode->data.length - bytes_written;
-  // if(length_added > 0){
-    off_t inode_left = (inode->data.length) - offset_;
-    if(bytes_written > inode_left ){
-      inode->data.length += bytes_written - inode_left;
-    }
-    block_write(fs_device, inode->data.location, &(inode->data));
-  // }
+  off_t inode_left = (inode->data.length) - offset_;
+  if(bytes_written > inode_left ){
+    inode->data.length += bytes_written - inode_left;
+  }
+  block_write(fs_device, inode->data.location, &(inode->data));
 
   return bytes_written;
 }
