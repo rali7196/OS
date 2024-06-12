@@ -203,6 +203,9 @@ thread_create (const char *name, int priority,
   sf->eip = switch_entry;
   sf->ebp = 0;
 
+  t->parent = thread_current(); // Set the parent pointer
+  t->cwd = thread_current()->cwd; // Set the child's cwd to the parent's cwd
+
   /* Add to run queue. */
   thread_unblock (t);
 

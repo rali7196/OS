@@ -120,10 +120,10 @@ process_execute (const char *file_name, struct exec_args* local_args)
     return TID_ERROR;
   } else {
     struct thread *child = get_thread_by_tid(tid);
-    if (child) {
-      child->parent = thread_current(); // Set the parent pointer
-      child->cwd = thread_current()->cwd; // Set the child's cwd to the parent's cwd
-    }
+    // if (child) { //moved to thread_create
+    //   child->parent = thread_current(); // Set the parent pointer
+    //   child->cwd = thread_current()->cwd; // Set the child's cwd to the parent's cwd
+    // }
     // add child thread to parent's children list
     struct process_info *child_info = malloc(sizeof(struct process_info));
     if (child_info) {

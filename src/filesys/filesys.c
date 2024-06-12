@@ -50,7 +50,7 @@ filesys_create (const char *name, off_t initial_size, bool is_dir)
   bool success = (dir != NULL
                   && free_map_allocate (1, &inode_sector)
                   && inode_create (inode_sector, initial_size, is_dir)
-                  && dir_add (dir, name, inode_sector));
+                  && dir_add (dir, name, inode_sector, is_dir));
   if (!success && inode_sector != 0) 
     free_map_release (inode_sector, 1);
   dir_close (dir);
@@ -73,7 +73,14 @@ filesys_open (const char *name)
     dir_lookup (dir, name, &inode);
   dir_close (dir);
 
-  return file_open (inode);
+  if (inode == NULL)
+    return NULL;
+
+  if (inode_is_dir (inode))
+    // return dir_open (inode);
+    return (struct file *) dir_open (inode);
+  else
+    return file_open (inode);
 }
 
 /** Deletes the file named NAME.

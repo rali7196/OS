@@ -19,6 +19,7 @@ struct dir_entry
     block_sector_t inode_sector;        /**< Sector number of header. */
     char name[NAME_MAX + 1];            /**< Null terminated file name. */
     bool in_use;                        /**< In use or free? */
+    bool is_dir;
   };
 
 /** Creates a directory with space for ENTRY_CNT entries in the
@@ -120,16 +121,20 @@ dir_lookup (const struct dir *dir, const char *name,
             struct inode **inode) 
 {
   struct dir_entry e;
+  size_t ofs;
 
   ASSERT (dir != NULL);
   ASSERT (name != NULL);
 
-  if (lookup (dir, name, &e, NULL))
-    *inode = inode_open (e.inode_sector);
-  else
-    *inode = NULL;
-
-  return *inode != NULL;
+  for (ofs = 0; inode_read_at (dir->inode, &e, sizeof e, ofs) == sizeof e;
+       ofs += sizeof e) 
+    if (e.in_use && !strcmp (name, e.name)) 
+      {
+        if (inode != NULL)
+          *inode = inode_open (e.inode_sector);
+        return true;
+      }
+  return false;
 }
 
 /** Adds a file named NAME to DIR, which must not already contain a
@@ -139,7 +144,7 @@ dir_lookup (const struct dir *dir, const char *name,
    Fails if NAME is invalid (i.e. too long) or a disk or memory
    error occurs. */
 bool
-dir_add (struct dir *dir, const char *name, block_sector_t inode_sector)
+dir_add (struct dir *dir, const char *name, block_sector_t inode_sector, bool is_dir)
 {
   struct dir_entry e;
   off_t ofs;
@@ -170,6 +175,7 @@ dir_add (struct dir *dir, const char *name, block_sector_t inode_sector)
 
   /* Write slot. */
   e.in_use = true;
+  e.is_dir = is_dir;
   strlcpy (e.name, name, sizeof e.name);
   e.inode_sector = inode_sector;
   success = inode_write_at (dir->inode, &e, sizeof e, ofs) == sizeof e;
@@ -200,6 +206,20 @@ dir_remove (struct dir *dir, const char *name)
   inode = inode_open (e.inode_sector);
   if (inode == NULL)
     goto done;
+
+  /* If removing a directory, check if it is empty. */
+  if (inode_is_dir(inode)) {
+    struct dir *subdir = dir_open(inode);
+    if (subdir == NULL)
+      goto done;
+
+    if (!dir_is_empty(subdir)) {
+      dir_close(subdir);
+      goto done;
+    }
+
+    dir_close(subdir);
+  }
 
   /* Erase directory entry. */
   e.in_use = false;
@@ -233,4 +253,13 @@ dir_readdir (struct dir *dir, char name[NAME_MAX + 1])
         } 
     }
   return false;
+}
+
+// Assign 4 helper functions
+
+/** Checks if a directory is empty. */
+bool
+dir_is_empty(struct dir *dir) {
+  char name[NAME_MAX + 1];
+  return !dir_readdir(dir, name);
 }

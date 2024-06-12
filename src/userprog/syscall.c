@@ -13,6 +13,8 @@
 #include "threads/synch.h"
 #include <string.h>
 #include "threads/malloc.h"
+#include "filesys/inode.h"
+#include "filesys/directory.h"
 
 
 static void syscall_handler (struct intr_frame *);
@@ -370,10 +372,19 @@ syscall_handler (struct intr_frame *f)
     lock_release(&fs_lock);
     thread_current()->file_descriptors_table[fd] = NULL;
   }
-  // else {  // to-do: add proper error handling
-  //   printf("Invalid system call number\n");
-  // }
-  // thread_exit ();
+  else if (syscall_num == SYS_MKDIR){
+    
+  }
+  else if (syscall_num == SYS_READDIR){
+
+  }
+  else if (syscall_num == SYS_ISDIR){
+
+  }
+  else if (syscall_num == SYS_INUMBER){
+
+  }
+
 }
 
 /*Return false if the given pointer is NULL, out of user space, or not in its page*/

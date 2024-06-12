@@ -17,7 +17,7 @@ struct inode_disk
     block_sector_t start;               /**< First data sector. */
     off_t length;                       /**< File size in bytes. */
     unsigned magic;                     /**< Magic number. */
-    uint32_t unused[125];               /**< Not used. */
+    uint32_t unused[123];               /**< Not used. */
 
     bool is_dir;                        /**< True if inode is a directory. */
     block_sector_t parent;              /**< Parent directory's sector number. */
@@ -350,4 +350,13 @@ off_t
 inode_length (const struct inode *inode)
 {
   return inode->data.length;
+}
+
+// assign 4 helper functions
+
+/** Returns true if INODE is a directory, false otherwise. */
+bool
+inode_is_dir (const struct inode *inode)
+{
+  return inode->data.is_dir;
 }
