@@ -121,21 +121,17 @@ dir_lookup (const struct dir *dir, const char *name,
             struct inode **inode) 
 {
   struct dir_entry e;
-  size_t ofs;
 
   ASSERT (dir != NULL);
   ASSERT (name != NULL);
 
-  for (ofs = 0; inode_read_at (dir->inode, &e, sizeof e, ofs) == sizeof e;
-       ofs += sizeof e) 
-    if (e.in_use && !strcmp (name, e.name)) 
-      {
-        if (inode != NULL)
-          *inode = inode_open (e.inode_sector);
-        return true;
-      }
-  *inode = NULL;
-  return false;
+  if (lookup (dir, name, &e, NULL))
+    *inode = inode_open (e.inode_sector);
+  else
+    *inode = NULL;
+
+  return *inode != NULL;
+
 }
 
 /** Adds a file named NAME to DIR, which must not already contain a
@@ -147,6 +143,8 @@ dir_lookup (const struct dir *dir, const char *name,
 bool
 dir_add (struct dir *dir, const char *name, block_sector_t inode_sector, bool is_dir)
 {
+  printf("dir_add called: %s, inode_sector: %d, is_dir: %d\n", name, inode_sector, is_dir);
+  printf("dir_add called with inode: %d\n", dir->inode);
   struct dir_entry e;
   off_t ofs;
   bool success = false;
@@ -159,9 +157,13 @@ dir_add (struct dir *dir, const char *name, block_sector_t inode_sector, bool is
     return false;
 
   /* Check that NAME is not in use. */
-  if (lookup (dir, name, NULL, NULL))
+  if (lookup (dir, name, NULL, NULL)){
+    printf("dir_add failed: %s\n", name);
     goto done;
-    
+  }
+
+  if (!inode_make_parent(inode_get_inumber(dir->inode), inode_sector))
+    goto done;
   /* Set OFS to offset of free slot.
      If there are no free slots, then it will be set to the
      current end-of-file.
@@ -179,9 +181,11 @@ dir_add (struct dir *dir, const char *name, block_sector_t inode_sector, bool is
   e.is_dir = is_dir;
   strlcpy (e.name, name, sizeof e.name);
   e.inode_sector = inode_sector;
+  printf("inode_write_at called with inode: %d, name: %s, is_dir: %d, inode_sector: %d\n", dir->inode, e.name, e.is_dir, e.inode_sector);
   success = inode_write_at (dir->inode, &e, sizeof e, ofs) == sizeof e;
-
+  printf("inode_write_at returned: %d\n", success);
  done:
+  printf("dir_add done: %d\n", success);
   return success;
 }
 

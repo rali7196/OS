@@ -6,7 +6,8 @@
 #include "filesys/filesys.h"
 #include "filesys/free-map.h"
 #include "threads/malloc.h"
-
+#include "threads/thread.h"
+#include <stdio.h>
 /** Identifies an inode. */
 #define INODE_MAGIC 0x494e4f44
 
@@ -78,6 +79,7 @@ inode_init (void)
 bool
 inode_create (block_sector_t sector, off_t length, bool is_dir)
 {
+  printf("inode_create called: sector: %d, length: %d, is_dir: %d\n", sector, length, is_dir);
   struct inode_disk *disk_inode = NULL;
   bool success = false;
 
@@ -94,7 +96,7 @@ inode_create (block_sector_t sector, off_t length, bool is_dir)
       disk_inode->length = length;
       disk_inode->magic = INODE_MAGIC;
       disk_inode->is_dir = is_dir;
-      disk_inode->parent = ROOT_DIR_SECTOR; // set to root for now
+      disk_inode->parent = ROOT_DIR_SECTOR;
       if (free_map_allocate (sectors, &disk_inode->start)) 
         {
           block_write (fs_device, sector, disk_inode);
@@ -366,4 +368,18 @@ block_sector_t
 inode_get_parent (const struct inode *inode)
 {
   return inode->data.parent;
+}
+
+bool inode_make_parent(block_sector_t parent_sector, block_sector_t child_sector) {
+  struct inode *inode = inode_open(child_sector);
+  if (inode == NULL)
+    return false;
+
+  inode->data.parent = parent_sector;
+
+  // Write the modified inode data back to disk
+  block_write(fs_device, inode->sector, &inode->data);
+
+  inode_close(inode);
+  return true;
 }

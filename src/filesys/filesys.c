@@ -8,6 +8,9 @@
 #include "filesys/directory.h"
 #include "threads/thread.h"
 #include "threads/malloc.h"
+#include "filesys/directory.h"
+// clear && make all && pintos -v -k -T 60 --qemu  --disk=tmp.dsk -p tests/filesys/extended/dir-mkdir -a dir-mkdir -p tests/filesys/extended/tar -a tar -- -q  -f run dir-mkdir
+// clear && make all && pintos -v -k -T 60  --qemu --disk=tmp.dsk -g fs.tar -a tests/filesys/extended/dir-mkdir.tar -- -q  run 'tar fs.tar /' < /dev/null 2> tests/filesys/extended/dir-mkdir-persistence.errors
 /** Partition that contains the file system. */
 struct block *fs_device;
 
@@ -46,19 +49,23 @@ filesys_done (void)
 bool
 filesys_create (const char *name, off_t initial_size, bool is_dir) 
 {
+  printf("filesys_create called: %s, is_dir: %d\n", name, is_dir);
+
   block_sector_t inode_sector = 0;
   // struct dir *dir = dir_open_root ();
   struct dir *dir = path_to_dir (name);
   char* file_name = path_to_name (name);
-  
-  bool success = (dir != NULL && file_name != NULL
+  printf("file_name from path_to_name: %s\n", file_name);
+  bool success = false;
+  if (strcmp(file_name, ".") != 0 && strcmp(file_name, "..") != 0)
+    success = (dir != NULL && file_name != NULL
                   && free_map_allocate (1, &inode_sector)
                   && inode_create (inode_sector, initial_size, is_dir)
                   && dir_add (dir, file_name, inode_sector, is_dir));
   if (!success && inode_sector != 0) 
     free_map_release (inode_sector, 1);
   dir_close (dir);
-  free (file_name);
+  // free (file_name);
   return success;
 }
 
@@ -117,55 +124,58 @@ do_format (void)
 char*
 path_to_name(const char* path_name)
 {
-  char* name = malloc (strlen(path_name) + 1);
-  strlcpy (name, path_name, strlen(path_name) + 1);
-  char* save_ptr;
-  char* token = strtok_r (name, "/", &save_ptr);
-  char* prev_token = token;
-  while (token != NULL)
-  {
-    prev_token = token;
-    token = strtok_r (NULL, "/", &save_ptr);
+  unsigned len = strlen(path_name);
+  char copy[len + 1];
+  memcpy(copy, path_name, len + 1);
+
+  char *saveptr;
+  char *prev = "";
+  char *token = strtok_r(copy, "/", &saveptr);
+  while(token != NULL){
+    prev = token;
+    token = strtok_r(NULL, "/", &saveptr);
   }
-  return prev_token;
+
+  len = strlen(prev);
+  char *last_dir = (char *) malloc(len + 1);
+  memcpy(last_dir, prev, len + 1);
+  return last_dir;
 }
 
 struct dir*
-path_to_dir(const char* path_name)
+path_to_dir(const char* path)
 {
-  int length = strlen(path_name);
-  char path[length + 1];
-  memcpy(path, path_name, length + 1);
+  unsigned len = strlen(path);
+  char copy[len + 1];
+  memcpy(copy, path, len + 1);
 
-  struct dir* dir;
-  if(path[0] == '/' || !thread_current()->cwd)
+  struct dir *dir;
+  if (copy[0] == '/' || thread_current()->cwd == NULL)
     dir = dir_open_root();
   else
     dir = dir_reopen(thread_current()->cwd);
   
-  char *cur, *ptr, *prev;
-  prev = strtok_r(path, "/", &ptr);
-  for(cur = strtok_r(NULL, "/", &ptr); cur != NULL;
-    prev = cur, cur = strtok_r(NULL, "/", &ptr))
-  {
-    struct inode* inode;
-    if(strcmp(prev, ".") == 0) continue;
-    else if(strcmp(prev, "..") == 0)
-    {
-      inode = dir_parent_inode(dir);
-      if(inode == NULL) return NULL;
-    }
-    else if(dir_lookup(dir, prev, &inode) == false)
-      return NULL;
+  char *saveptr;
+  char *token = strtok_r(copy, "/", &saveptr);
+  char *next = strtok_r(NULL, "/", &saveptr);
+  while(next){
+    if (strcmp(token, ".") != 0){
+      struct inode *inode;
+      if (strcmp(token, "..") == 0 && !dir_parent_inode(dir))
+        return NULL;
+      if (!dir_lookup(dir, token, &inode))
+        return NULL;
 
-    if(inode_is_dir(inode))
-    {
-      dir_close(dir);
-      dir = dir_open(inode);
+      if (inode_is_dir(inode)){
+        dir_close(dir);
+        printf("path_to_dir: %s\n", token);
+        dir = dir_open(inode);
+      }
+      else
+        inode_close(inode);
     }
-    else
-      inode_close(inode);
+    token = next;
+    next = strtok_r(NULL, "/", &saveptr);
   }
-
   return dir;
 }
