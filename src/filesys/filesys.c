@@ -6,7 +6,8 @@
 #include "filesys/free-map.h"
 #include "filesys/inode.h"
 #include "filesys/directory.h"
-
+#include "threads/thread.h"
+#include "threads/malloc.h"
 /** Partition that contains the file system. */
 struct block *fs_device;
 
@@ -46,15 +47,18 @@ bool
 filesys_create (const char *name, off_t initial_size, bool is_dir) 
 {
   block_sector_t inode_sector = 0;
-  struct dir *dir = dir_open_root ();
-  bool success = (dir != NULL
+  // struct dir *dir = dir_open_root ();
+  struct dir *dir = path_to_dir (name);
+  char* file_name = path_to_name (name);
+  
+  bool success = (dir != NULL && file_name != NULL
                   && free_map_allocate (1, &inode_sector)
                   && inode_create (inode_sector, initial_size, is_dir)
-                  && dir_add (dir, name, inode_sector, is_dir));
+                  && dir_add (dir, file_name, inode_sector, is_dir));
   if (!success && inode_sector != 0) 
     free_map_release (inode_sector, 1);
   dir_close (dir);
-
+  free (file_name);
   return success;
 }
 
@@ -66,7 +70,7 @@ filesys_create (const char *name, off_t initial_size, bool is_dir)
 struct file *
 filesys_open (const char *name)
 {
-  struct dir *dir = dir_open_root ();
+  struct dir *dir = path_to_dir (name);
   struct inode *inode = NULL;
 
   if (dir != NULL)
@@ -107,4 +111,61 @@ do_format (void)
     PANIC ("root directory creation failed");
   free_map_close ();
   printf ("done.\n");
+}
+
+//assign 4 helper
+char*
+path_to_name(const char* path_name)
+{
+  char* name = malloc (strlen(path_name) + 1);
+  strlcpy (name, path_name, strlen(path_name) + 1);
+  char* save_ptr;
+  char* token = strtok_r (name, "/", &save_ptr);
+  char* prev_token = token;
+  while (token != NULL)
+  {
+    prev_token = token;
+    token = strtok_r (NULL, "/", &save_ptr);
+  }
+  return prev_token;
+}
+
+struct dir*
+path_to_dir(const char* path_name)
+{
+  int length = strlen(path_name);
+  char path[length + 1];
+  memcpy(path, path_name, length + 1);
+
+  struct dir* dir;
+  if(path[0] == '/' || !thread_current()->cwd)
+    dir = dir_open_root();
+  else
+    dir = dir_reopen(thread_current()->cwd);
+  
+  char *cur, *ptr, *prev;
+  prev = strtok_r(path, "/", &ptr);
+  for(cur = strtok_r(NULL, "/", &ptr); cur != NULL;
+    prev = cur, cur = strtok_r(NULL, "/", &ptr))
+  {
+    struct inode* inode;
+    if(strcmp(prev, ".") == 0) continue;
+    else if(strcmp(prev, "..") == 0)
+    {
+      inode = dir_parent_inode(dir);
+      if(inode == NULL) return NULL;
+    }
+    else if(dir_lookup(dir, prev, &inode) == false)
+      return NULL;
+
+    if(inode_is_dir(inode))
+    {
+      dir_close(dir);
+      dir = dir_open(inode);
+    }
+    else
+      inode_close(inode);
+  }
+
+  return dir;
 }

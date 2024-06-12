@@ -78,7 +78,30 @@ syscall_handler (struct intr_frame *f)
     }
     int status = *((int*)f->esp + 1);
 
+    // close all files/dirs
+    for (int fd = 2; fd < MAX_FILE_DESCRIPTORS; fd++){
+      if (thread_current()->file_descriptors_table[fd] != NULL)
+      {
+        struct inode* inode = file_get_inode(thread_current()->file_descriptors_table[fd]);
+        if(inode == NULL){
+          continue;
+        }
+        if(inode_is_dir(inode)){
+          dir_close(thread_current()->file_descriptors_table[fd]);
+        }
+          
+        else{
+          file_close (thread_current()->file_descriptors_table[fd]);
+        }
+        thread_current()->file_descriptors_table[fd] = NULL;
+      }
+    }
     
+    // close cwd
+    if (thread_current()->cwd){
+      dir_close(thread_current()->cwd);
+    }
+
     // printf("%s: exit(%d)\n", thread_current()->name, status);
     thread_current()->exit_status = status;
     thread_exit();
@@ -368,21 +391,126 @@ syscall_handler (struct intr_frame *f)
       thread_exit();
     }
     lock_acquire(&fs_lock);
-    file_close(thread_current()->file_descriptors_table[fd]);
-    lock_release(&fs_lock);
+
+    struct inode* inode = file_get_inode(thread_current()->file_descriptors_table[fd]);
+    if (inode == NULL){
+      f->eax = -1;
+      lock_release(&fs_lock);
+      thread_current()->exit_status = -1;
+      thread_exit();
+    }
+
+    if (inode_is_dir(inode)){
+      dir_close(thread_current()->file_descriptors_table[fd]);
+    }
+    else{
+      file_close(thread_current()->file_descriptors_table[fd]);
+    }
     thread_current()->file_descriptors_table[fd] = NULL;
+    lock_release(&fs_lock);
   }
   else if (syscall_num == SYS_MKDIR){
-    
+    lock_acquire(&fs_lock);
+
+    if (!validate_user_pointer((void*)(f->esp + 1))) {
+      f->eax = -1;
+      lock_release(&fs_lock);
+      thread_current()->exit_status = -1;
+      thread_exit();
+    }
+
+    char* path = (char*)*((int *)f->esp + 1);
+    f->eax = filesys_create(path, 0, true);
+
+    lock_release(&fs_lock);
   }
   else if (syscall_num == SYS_READDIR){
+    lock_acquire(&fs_lock);
+    if (!validate_user_pointer((void*)(f->esp + 2))){
+      f->eax = -1;
+      lock_release(&fs_lock);
+      thread_current()->exit_status = -1;
+      thread_exit();
+    }
 
+    char* path = (char*)*((int *)f->esp + 2);
+    int fd = *((int*)f->esp + 1);
+    if (!validate_file_descriptor(fd)){
+      f->eax = -1;
+      thread_current()->exit_status = -1;
+      thread_exit();
+    }
+    struct file* file = thread_current()->file_descriptors_table[fd];
+    if (file == NULL){
+      f->eax = false;
+    }
+
+    struct inode* inode = file_get_inode(file);
+    if(inode == NULL){
+      f->eax = false;
+    }
+    if(!inode_is_dir(inode)){
+      f->eax = false;
+    }
+
+    struct dir* dir = (struct dir*) file;
+    if(!dir_readdir(dir, path)) {
+      f->eax = false;
+    }
+
+    f->eax = true;
+
+    lock_release(&fs_lock);
   }
   else if (syscall_num == SYS_ISDIR){
 
+    if ((!validate_user_pointer((void*)(f->esp + 1)))){
+      f->eax = -1;
+      thread_current()->exit_status = -1;
+      thread_exit();
+    }
+
+    int fd = *((int*)f->esp + 1);
+    if (!validate_file_descriptor(fd)){
+      f->eax = -1;
+      thread_current()->exit_status = -1;
+      thread_exit();
+    }
+
+    struct file* file = thread_current()->file_descriptors_table[fd];
+    if (file == NULL) {
+      f->eax = false;
+    }
+
+    struct inode* inode = file_get_inode(file);
+    if(inode == NULL){
+      f->eax = false;
+    }
+    if(!inode_is_dir(inode)){
+      f->eax = false;
+    }
+
+    f->eax = true;
   }
   else if (syscall_num == SYS_INUMBER){
+    int fd = *((int*)f->esp + 1);
+    if (!validate_file_descriptor(fd)){
+      f->eax = -1;
+      thread_current()->exit_status = -1;
+      thread_exit();
+    }
+    struct file* file = thread_current()->file_descriptors_table[fd];
+    if (file == NULL){
+      f->eax = -1;
+    }
 
+    struct inode* inode = file_get_inode(file);
+    if(inode == NULL){
+      f->eax = -1;
+    }
+
+    block_sector_t inumber = inode_get_inumber(inode);
+    f->eax = inumber;
   }
 
 }

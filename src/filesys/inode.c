@@ -360,3 +360,10 @@ inode_is_dir (const struct inode *inode)
 {
   return inode->data.is_dir;
 }
+
+/** Returns the sector number of the parent directory of INODE. */
+block_sector_t
+inode_get_parent (const struct inode *inode)
+{
+  return inode->data.parent;
+}

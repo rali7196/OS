@@ -5,7 +5,7 @@
 #include "filesys/filesys.h"
 #include "filesys/inode.h"
 #include "threads/malloc.h"
-
+#include "threads/thread.h"
 /** A directory. */
 struct dir 
   {
@@ -134,6 +134,7 @@ dir_lookup (const struct dir *dir, const char *name,
           *inode = inode_open (e.inode_sector);
         return true;
       }
+  *inode = NULL;
   return false;
 }
 
@@ -160,7 +161,7 @@ dir_add (struct dir *dir, const char *name, block_sector_t inode_sector, bool is
   /* Check that NAME is not in use. */
   if (lookup (dir, name, NULL, NULL))
     goto done;
-
+    
   /* Set OFS to offset of free slot.
      If there are no free slots, then it will be set to the
      current end-of-file.
@@ -262,4 +263,69 @@ bool
 dir_is_empty(struct dir *dir) {
   char name[NAME_MAX + 1];
   return !dir_readdir(dir, name);
+}
+
+struct dir* dir_open_path(const char *path) {
+  struct dir *dir = NULL;
+  struct inode *inode = NULL;
+
+  if (path[0] == '/') {
+    dir = dir_open_root();
+  } else {
+    dir = dir_reopen(thread_current()->cwd);
+  }
+
+  char *token, *save_ptr;
+  char *path_copy = malloc(strlen(path) + 1);
+  strlcpy(path_copy, path, strlen(path) + 1);
+
+  for (token = strtok_r(path_copy, "/", &save_ptr); token != NULL;
+       token = strtok_r(NULL, "/", &save_ptr)) {
+    if (strcmp(token, ".") == 0) {
+      continue;
+    } else if (strcmp(token, "..") == 0) {
+      inode = dir_parent_inode(dir);
+      if (inode == NULL) {
+        dir_close(dir);
+        free(path_copy);
+        return NULL;
+      }
+      dir_close(dir);
+      dir = dir_open(inode);
+    } else {
+      if (!dir_lookup(dir, token, &inode)) {
+        dir_close(dir);
+        free(path_copy);
+        return NULL;
+      }
+      dir_close(dir);
+      dir = dir_open(inode);
+    }
+  }
+
+  free(path_copy);
+  return dir;
+}
+
+struct inode* dir_parent_inode(struct dir* dir) {
+  if (dir == NULL) {
+    return NULL;
+  }
+
+  struct inode *inode = dir_get_inode(dir);
+  if (inode == NULL) {
+    return NULL;
+  }
+
+  block_sector_t parent_sector = inode_get_parent(inode);
+  if (parent_sector == ROOT_DIR_SECTOR) {
+    return inode_open(parent_sector);
+  }
+
+  struct inode *parent_inode = inode_open(parent_sector);
+  if (parent_inode == NULL) {
+    return NULL;
+  }
+
+  return parent_inode;
 }
