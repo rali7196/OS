@@ -420,6 +420,8 @@ syscall_handler (struct intr_frame *f)
     }
 
     char* path = (char*)*((int *)f->esp + 1);
+    //need to parse the string, and then keep calling dir look up to find the inodes
+    
     f->eax = filesys_create(path, 0, true);
 
     lock_release(&fs_lock);

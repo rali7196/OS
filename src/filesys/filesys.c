@@ -168,7 +168,7 @@ path_to_dir(const char* path)
 
       if (inode_is_dir(inode)){
         dir_close(dir);
-        printf("path_to_dir: %s\n", token);
+        // printf("path_to_dir: %s\n", token);
         dir = dir_open(inode);
       }
       else
