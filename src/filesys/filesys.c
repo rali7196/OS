@@ -96,9 +96,12 @@ filesys_open (const char *name)
   if (inode == NULL)
     return NULL;
 
-  if (inode_is_dir (inode))
+  if (inode_is_dir (inode)){
     // return dir_open (inode);
-    return (struct file *) dir_open (inode);
+    struct file* res = (struct file*) dir_open(inode);
+    // return (struct file *) dir_open (inode);
+    return res;
+  }
   else
     return file_open (inode);
 }
@@ -240,13 +243,15 @@ path_to_dir(const char* path)
 char* parse_path_name(const char* name){
 
   if(thread_current()->cwd2 == NULL || (name[0] == '/' && strlen(thread_current()->cwd2) == 1)){
-    return name;
+    char* temp = malloc(128);
+    strlcpy(temp, name, strlen(name)+1);
+    return temp;
   }
 
 
   char* name_copy = malloc(strlen(name) * sizeof(char));
   strlcpy(name_copy, name, strlen(name)+1);
-  struct dir *dir = path_to_dir (name);
+  // struct dir *dir = path_to_dir (name);
   char** path_split = malloc(sizeof(char*) * 20);
   char* token;
   char* save_ptr;

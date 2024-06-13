@@ -4,13 +4,7 @@
 #include "threads/malloc.h"
 
 /** An open file. */
-struct file 
-  {
-    struct inode *inode;        /**< File's inode. */
-    off_t pos;                  /**< Current position. */
-    bool deny_write;            /**< Has file_deny_write() been called? */
-    bool is_dir;
-  };
+
 
 /** Opens a file for the given INODE, of which it takes ownership,
    and returns the new file.  Returns a null pointer if an
@@ -27,6 +21,8 @@ file_open (struct inode *inode)
       file->deny_write = false;
       if(inode_is_dir(inode)){
         file->is_dir = true;
+      } else {
+        file->is_dir = false;
       }
       return file;
     }

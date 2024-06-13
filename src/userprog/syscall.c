@@ -16,6 +16,7 @@
 #include "filesys/inode.h"
 #include "filesys/directory.h"
 #include "filesys/free-map.h"
+#include "filesys/file.h"
 
 
 
@@ -379,6 +380,12 @@ syscall_handler (struct intr_frame *f)
         thread_exit();
       }
       lock_acquire(&fs_lock);
+      struct file* to_write = thread_current()->file_descriptors_table[fd];
+      if(to_write->is_dir){
+        f->eax = -1;
+        lock_release(&fs_lock);
+        return;
+      }
       f->eax = file_write(thread_current()->file_descriptors_table[fd], buffer, size);
       lock_release(&fs_lock);
     }
