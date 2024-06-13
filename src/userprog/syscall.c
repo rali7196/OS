@@ -15,6 +15,8 @@
 #include "threads/malloc.h"
 #include "filesys/inode.h"
 #include "filesys/directory.h"
+#include "filesys/free-map.h"
+
 
 
 static void syscall_handler (struct intr_frame *);
@@ -51,6 +53,11 @@ syscall_init (void)
 static void
 syscall_handler (struct intr_frame *f) 
 {
+
+  if(thread_current()->cwd2 == NULL){
+    thread_current()->cwd2 = malloc(256);
+    strlcpy(thread_current()->cwd2, "/", 2);
+  }
   //check lower bound of memory to ensure that it is okay
   if (!validate_user_pointer(f->esp)) {
     // printf("Invalid ESP in syscall_handler\n"); // debug
@@ -86,9 +93,9 @@ syscall_handler (struct intr_frame *f)
         if(inode == NULL){
           continue;
         }
-        if(inode_is_dir(inode)){
-          dir_close(thread_current()->file_descriptors_table[fd]);
-        }
+        // if(inode_is_dir(inode)){
+        //   dir_close(thread_current()->file_descriptors_table[fd]);
+        // }
           
         else{
           file_close (thread_current()->file_descriptors_table[fd]);
@@ -258,7 +265,28 @@ syscall_handler (struct intr_frame *f)
       thread_exit();  // Terminate the process if ESP is invalid
     }
     lock_acquire(&fs_lock);
-    struct file* file = filesys_open(file_name);
+
+    //have full file path, just need to parse it and then determine if its a directory or a file
+    //only have to do string parsing if im not in the root directory and my file path is long
+    if(strlen(file_name) == 0){
+      f->eax = -1;
+      lock_release(&fs_lock);
+      return;
+    }
+    char* temp = malloc(512);
+    if(strcmp(thread_current()->cwd2, "/") != 0 || strlen(file_name) > NAME_MAX){
+      //concatenate current path to cwd
+      strlcpy(temp, thread_current()->cwd2, strlen(thread_current()->cwd2)+1);
+      strlcat(temp, file_name, strlen(file_name) + strlen(temp)+1);
+      strlcat(temp, "/", strlen(temp)+strlen("/") + 1);
+
+      // struct dir* my_dir = parse_path()
+    } else {
+      strlcpy(temp, file_name, strlen(file_name)+1);
+    }
+
+
+    struct file* file = filesys_open(temp);
     if (!file){
       f->eax = -1;
     } else {
@@ -400,9 +428,9 @@ syscall_handler (struct intr_frame *f)
       thread_exit();
     }
 
-    if (inode_is_dir(inode)){
-      dir_close(thread_current()->file_descriptors_table[fd]);
-    }
+    // if (inode_is_dir(inode)){
+    //   dir_close(thread_current()->file_descriptors_table[fd]);
+    // }
     else{
       file_close(thread_current()->file_descriptors_table[fd]);
     }
@@ -420,9 +448,22 @@ syscall_handler (struct intr_frame *f)
     }
 
     char* path = (char*)*((int *)f->esp + 1);
+    if(strlen(path) == 0){
+      f->eax = false;
+      lock_release(&fs_lock);
+      return;
+    }
     //need to parse the string, and then keep calling dir look up to find the inodes
+    block_sector_t new_dir_sector = 0;
+    free_map_allocate(1, &new_dir_sector);
     
-    f->eax = filesys_create(path, 0, true);
+    // f->eax = filesys_create(path, 0, true);
+    f->eax = dir_create(new_dir_sector, 1);
+    struct dir* to_add;
+
+    to_add = parse_path(path);
+    
+    dir_add(to_add, path, new_dir_sector, true);
 
     lock_release(&fs_lock);
   }
@@ -513,6 +554,26 @@ syscall_handler (struct intr_frame *f)
 
     block_sector_t inumber = inode_get_inumber(inode);
     f->eax = inumber;
+  }
+  else if (syscall_num == SYS_CHDIR){
+    if (!validate_user_pointer((void*)(f->esp + 1))) {
+      f->eax = -1;
+      lock_release(&fs_lock);
+      thread_current()->exit_status = -1;
+      thread_exit();
+    }
+
+    char* path = (char*)*((int *)f->esp + 1);
+    char* temp = malloc(512);
+
+    strlcpy(temp, path, strlen(path)+1);
+    strlcat(temp, "/", strlen(temp)+strlen("/") + 1);
+    strlcat(thread_current()->cwd2, temp, strlen(thread_current()->cwd2) + strlen(temp)+1);
+    // strlcpy(thread_current()->cwd2, path, strlen(path)+1);
+    
+    return;
+    
+
   }
 
 }

@@ -106,6 +106,7 @@ struct thread
     char *name2;
 
    struct dir *cwd;                       /*< Current working directory. */
+   char* cwd2;
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */

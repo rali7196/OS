@@ -104,6 +104,8 @@ process_execute (const char *file_name, struct exec_args* local_args)
   tid = thread_create (file_name, PRI_DEFAULT, start_process, (void*)local_args);
   struct thread *curr = thread_current();
   curr->name2 = malloc(128);
+  curr->cwd2 = malloc(256);
+  strlcpy(curr->cwd2, "/", strlen("/")+1);
   strlcpy(curr->name2, local_args->parsed_argv[local_args->parsed_argc-1], strlen(local_args->parsed_argv[local_args->parsed_argc-1])+1);
 
 
@@ -245,6 +247,7 @@ process_exit (void)
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
   free(cur->name2);
+  free(cur->cwd2);
   pd = cur->pagedir;
   if (pd != NULL) 
     {

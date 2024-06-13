@@ -9,6 +9,8 @@
 #include "threads/thread.h"
 #include "threads/malloc.h"
 #include "filesys/directory.h"
+#include "filesys/fsutil.h"
+
 // clear && make all && pintos -v -k -T 60 --qemu  --disk=tmp.dsk -p tests/filesys/extended/dir-mkdir -a dir-mkdir -p tests/filesys/extended/tar -a tar -- -q  -f run dir-mkdir
 // clear && make all && pintos -v -k -T 60  --qemu --disk=tmp.dsk -g fs.tar -a tests/filesys/extended/dir-mkdir.tar -- -q  run 'tar fs.tar /' < /dev/null 2> tests/filesys/extended/dir-mkdir-persistence.errors
 /** Partition that contains the file system. */
@@ -77,11 +79,18 @@ filesys_create (const char *name, off_t initial_size, bool is_dir)
 struct file *
 filesys_open (const char *name)
 {
-  struct dir *dir = path_to_dir (name);
+  // struct dir *dir = path_to_dir (name);
+  struct dir* dir = parse_path(name);
   struct inode *inode = NULL;
 
+  // char** argv;
+  // fsutil_ls(argv);
+
+  char* test = malloc(128);
+  test = parse_path_name(name);
+
   if (dir != NULL)
-    dir_lookup (dir, name, &inode);
+    dir_lookup (dir, test, &inode);
   dir_close (dir);
 
   if (inode == NULL)
@@ -142,6 +151,52 @@ path_to_name(const char* path_name)
   return last_dir;
 }
 
+
+
+struct dir* parse_path(const char* name){
+
+  char* name_copy = malloc(strlen(name) * sizeof(char));
+  strlcpy(name_copy, name, strlen(name)+1);
+  struct dir *dir = path_to_dir (name);
+  char** path_split = malloc(sizeof(char*) * 20);
+  char* token;
+  char* save_ptr;
+  int counter = 0;
+  for (token = strtok_r (name_copy, "/", &save_ptr); token != NULL;
+    token = strtok_r (NULL, "/", &save_ptr)){
+      path_split[counter] = malloc(sizeof(char) * strlen(token));
+      strlcpy(path_split[counter], token, strlen(token)+1);
+      counter += 1;
+    }
+
+
+
+  // printf("file_name from path_to_name: %s\n", file_name);
+
+
+  //need to call dir_lookup on all previous, needs to be one less than counter because 
+  //last one is in file
+
+  struct dir* curr = dir_open_root();
+  if(thread_current()->cwd2 == NULL || (name[0] == '/' && strlen(thread_current()->cwd2) == 1)){
+    dir = dir_open_root();
+    return dir;
+  }
+  
+  struct inode* temp = malloc(sizeof(struct inode));
+  for(int i = 0; i < counter - 1; i++){
+    bool new = dir_lookup(curr, path_split[i], &temp);
+    if(new == false){
+      return NULL;
+    }
+    curr = dir_open(temp);
+  }
+  dir = curr;
+
+  return dir;
+}
+
+
 struct dir*
 path_to_dir(const char* path)
 {
@@ -178,4 +233,29 @@ path_to_dir(const char* path)
     next = strtok_r(NULL, "/", &saveptr);
   }
   return dir;
+}
+
+
+
+char* parse_path_name(const char* name){
+
+  if(thread_current()->cwd2 == NULL || (name[0] == '/' && strlen(thread_current()->cwd2) == 1)){
+    return name;
+  }
+
+
+  char* name_copy = malloc(strlen(name) * sizeof(char));
+  strlcpy(name_copy, name, strlen(name)+1);
+  struct dir *dir = path_to_dir (name);
+  char** path_split = malloc(sizeof(char*) * 20);
+  char* token;
+  char* save_ptr;
+  int counter = 0;
+  for (token = strtok_r (name_copy, "/", &save_ptr); token != NULL;
+    token = strtok_r (NULL, "/", &save_ptr)){
+      path_split[counter] = malloc(sizeof(char) * strlen(token));
+      strlcpy(path_split[counter], token, strlen(token)+1);
+      counter += 1;
+    }
+  return path_split[counter-1];
 }

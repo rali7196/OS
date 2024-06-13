@@ -11,6 +11,8 @@ struct dir
   {
     struct inode *inode;                /**< Backing store. */
     off_t pos;                          /**< Current position. */
+    bool deny_write;            /**< Has file_deny_write() been called? */
+    bool is_dir;
   };
 
 /** A single directory entry. */
