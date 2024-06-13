@@ -248,6 +248,11 @@ syscall_handler (struct intr_frame *f)
       thread_current()->exit_status = -1;
       thread_exit();  // Terminate the process if ESP is invalid
     }
+    if(strlen(file_name) == 0){
+      thread_current()->exit_status = -1;
+      thread_exit();
+      return;
+    }
     lock_acquire(&fs_lock);
     f->eax = filesys_create(file_name, initial_size, false);
     lock_release(&fs_lock);
@@ -455,6 +460,7 @@ syscall_handler (struct intr_frame *f)
     }
 
     char* path = (char*)*((int *)f->esp + 1);
+    // printf("%s\n", path);
     if(strlen(path) == 0){
       f->eax = false;
       lock_release(&fs_lock);

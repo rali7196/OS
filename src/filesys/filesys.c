@@ -54,9 +54,13 @@ filesys_create (const char *name, off_t initial_size, bool is_dir)
   // printf("filesys_create called: %s, is_dir: %d\n", name, is_dir);
 
   block_sector_t inode_sector = 0;
+  // printf("executed!!\n");
   // struct dir *dir = dir_open_root ();
-  struct dir *dir = path_to_dir (name);
-  char* file_name = path_to_name (name);
+  // struct dir *dir = path_to_dir (name);
+  // char* file_name = path_to_name (name);
+  struct dir* dir = parse_path(name);
+  char* file_name = malloc(128);
+  file_name = parse_path_name(name);
   // printf("file_name from path_to_name: %s\n", file_name);
   bool success = false;
   if (strcmp(file_name, ".") != 0 && strcmp(file_name, "..") != 0)
@@ -67,7 +71,7 @@ filesys_create (const char *name, off_t initial_size, bool is_dir)
   if (!success && inode_sector != 0) 
     free_map_release (inode_sector, 1);
   dir_close (dir);
-  // free (file_name);
+  free (file_name);
   return success;
 }
 

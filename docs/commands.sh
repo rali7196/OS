@@ -27,3 +27,5 @@ clear && make all && rm -f tmp.dsk && pintos-mkdisk tmp.dsk --filesys-size=2 && 
 
 clear && make all && rm -f tmp.dsk && pintos-mkdisk tmp.dsk --filesys-size=2 && pintos -v -k -T 60 --qemu --gdb --disk=tmp.dsk -p tests/filesys/extended/dir-open -a dir-open -p tests/filesys/extended/tar -a tar -- -q  -f run dir-open
 
+clear && make all && rm -f tmp.dsk && pintos-mkdisk tmp.dsk --filesys-size=2 && pintos -v -k -T 60 --qemu --gdb --disk=tmp.dsk -p tests/filesys/extended/dir-mk-tree -a dir-mk-tree -p tests/filesys/extended/tar -a tar -- -q  -f run dir-mk-tree
+
