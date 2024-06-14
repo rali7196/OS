@@ -255,6 +255,7 @@ syscall_handler (struct intr_frame *f)
     }
     lock_acquire(&fs_lock);
     f->eax = filesys_create(file_name, initial_size, false);
+
     lock_release(&fs_lock);
   }
   else if (syscall_num == SYS_REMOVE){  // remove the file with the given name
@@ -291,6 +292,8 @@ syscall_handler (struct intr_frame *f)
       strlcpy(temp, file_name, strlen(file_name)+1);
     }
 
+    // char** adf;
+    // fsutil_ls(adf);
 
     struct file* file = filesys_open(temp);
     if (!file){
@@ -576,12 +579,31 @@ syscall_handler (struct intr_frame *f)
       thread_exit();
     }
 
+
+    lock_acquire(&fs_lock);
     char* path = (char*)*((int *)f->esp + 1);
     char* temp = malloc(512);
+    struct inode* inode = malloc(sizeof(struct inode*));
+    struct dir* exists;
+    if(strlen(path)==1){
+      bool exists_bool = dir_lookup(dir_open_root(), path, &inode);
+      if(!exists_bool){
+        f->eax = false;
+        return;
+      }
+    }
+
+    exists = parse_path(path);
+    if(!exists){
+      f->eax = false;
+      return;
+    }
 
     strlcpy(temp, path, strlen(path)+1);
     strlcat(temp, "/", strlen(temp)+strlen("/") + 1);
     strlcat(thread_current()->cwd2, temp, strlen(thread_current()->cwd2) + strlen(temp)+1);
+    f->eax = true;
+    lock_release(&fs_lock);
     // strlcpy(thread_current()->cwd2, path, strlen(path)+1);
     
     return;
