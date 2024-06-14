@@ -17,6 +17,7 @@
 #include "filesys/directory.h"
 #include "filesys/free-map.h"
 #include "filesys/file.h"
+#include "filesys/fsutil.h"
 
 
 
@@ -469,11 +470,24 @@ syscall_handler (struct intr_frame *f)
       lock_release(&fs_lock);
       return;
     }
+    char* name = malloc(256);
+    // char** asdf;
+    // fsutil_ls(asdf);
+    struct dir* my_dir = dir_open_root();
+    while (dir_readdir (my_dir, name)){
+      if(strcmp(name, path) == 0){
+        f->eax = false;
+        lock_release(&fs_lock);
+        free(name);
+        return;
+      }
+    }
     //need to parse the string, and then keep calling dir look up to find the inodes
     block_sector_t new_dir_sector = 0;
     free_map_allocate(1, &new_dir_sector);
     
     // f->eax = filesys_create(path, 0, true);
+
     f->eax = dir_create(new_dir_sector, 1);
     struct dir* to_add;
 

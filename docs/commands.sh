@@ -29,3 +29,23 @@ clear && make all && rm -f tmp.dsk && pintos-mkdisk tmp.dsk --filesys-size=2 && 
 
 clear && make all && rm -f tmp.dsk && pintos-mkdisk tmp.dsk --filesys-size=2 && pintos -v -k -T 60 --qemu --gdb --disk=tmp.dsk -p tests/filesys/extended/dir-mk-tree -a dir-mk-tree -p tests/filesys/extended/tar -a tar -- -q  -f run dir-mk-tree
 
+clear && make all && rm -f tmp.dsk && pintos-mkdisk tmp.dsk --filesys-size=2 && pintos -v -k -T 60 --qemu --gdb --disk=tmp.dsk -p tests/filesys/extended/dir-rm-cwd -a dir-rm-cwd -p tests/filesys/extended/tar -a tar -- -q  -f run dir-rm-cwd
+
+clear && make all && rm -f tmp.dsk && pintos-mkdisk tmp.dsk --filesys-size=2 && pintos -v -k -T 60 --qemu --gdb --disk=tmp.dsk -p tests/filesys/extended/dir-rm-cwd -a dir-rm-cwd -p tests/filesys/extended/tar -a tar -- -q  -f run dir-rm-cwd
+
+
+pintos -v -k -T 60  --qemu --gdb --disk=tmp.dsk -g fs.tar -a tests/filesys/extended/dir-open.tar -- -q  run 'tar fs.tar /'
+
+
+# USE THIS COMMAND TO FIX STRING PARSING
+clear && make all && rm -f tmp.dsk && pintos-mkdisk tmp.dsk --filesys-size=2 && pintos -v -k -T 60 --qemu  --disk=tmp.dsk -p tests/filesys/extended/dir-open -a dir-open -p tests/filesys/extended/tar -a tar -- -q  -f run dir-open && pintos -v -k -T 60  --qemu --gdb --disk=tmp.dsk -g fs.tar -a tests/filesys/extended/dir-open.tar -- -q  run 'tar fs.tar /'
+
+clear && make all && rm -f tmp.dsk && pintos-mkdisk tmp.dsk --filesys-size=2 && pintos -v -k -T 60 --qemu --gdb --disk=tmp.dsk -p tests/filesys/extended/dir-open -a dir-open -p tests/filesys/extended/tar -a tar -- -q  -f run dir-open && pintos -v -k -T 60  --qemu --gdb --disk=tmp.dsk -g fs.tar -a tests/filesys/extended/dir-open.tar -- -q  run 'tar fs.tar /'
+
+clear && make all && rm -f tmp.dsk && pintos-mkdisk tmp.dsk --filesys-size=2 && pintos -v -k -T 60 --qemu  --disk=tmp.dsk -p tests/filesys/extended/dir-mkdir -a dir-mkdir -p tests/filesys/extended/tar -a tar -- -q  -f run dir-mkdir && pintos -v -k -T 60  --qemu --gdb --disk=tmp.dsk -g fs.tar -a tests/filesys/extended/dir-mkdir.tar -- -q  run 'tar fs.tar /'
+
+clear && make all && rm -f tmp.dsk && pintos-mkdisk tmp.dsk --filesys-size=2 && pintos -v -k -T 150 --qemu --gdb --disk=tmp.dsk -p tests/filesys/extended/dir-vine -a dir-vine -p tests/filesys/extended/tar -a tar -- -q  -f run dir-vine
+
+clear && make all && rm -f tmp.dsk && pintos-mkdisk tmp.dsk --filesys-size=2 && pintos -v -k -T 60 --qemu --gdb --disk=tmp.dsk -p tests/filesys/extended/dir-rmdir -a dir-rmdir -p tests/filesys/extended/tar -a tar -- -q  -f run dir-rmdir
+
+p
