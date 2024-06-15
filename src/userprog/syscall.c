@@ -295,8 +295,12 @@ syscall_handler (struct intr_frame *f)
 
     // char** adf;
     // fsutil_ls(adf);
-
-    struct file* file = filesys_open(temp);
+    struct file* file;
+    if(strcmp(temp, "/") == 0){
+      file = (struct file*) dir_open_root();
+    } else {
+      file = filesys_open(temp);
+    }
     if (!file){
       f->eax = -1;
     } else {
