@@ -1,5 +1,5 @@
 # Pintos
-This repo is the starter code for ~~Embedded~~ Operating Systems at UC Santa Cruz.
+This repo is my operating systems homework from UC Santa Cruz. It uses the Pintos operating system, an educational OS developed at Stanford.
 
 [Pintos](http://pintos-os.org) is a teaching operating system for 32-bit x86.
 The project is real enough to teach operating systems, but small enough to be
